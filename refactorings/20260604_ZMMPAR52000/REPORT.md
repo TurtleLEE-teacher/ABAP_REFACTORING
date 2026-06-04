@@ -201,7 +201,8 @@ ENDFORM.
 - [x] **F02 + 소형 INCLUDE 전체 처리** — to-be 6종 생성, 죽은코드 **276줄 제거** + F02 컬럼주석 82개 → [`CLEANUP_LOG_others.md`](./CLEANUP_LOG_others.md)
   - F02(252)·TOP(7)·C01(2)·SCR(1)·O01(14)·I01(0). 무결성: FORM/MODULE/CLASS 전부 보존
 - [x] **전체 to-be 7개 INCLUDE 클린본 확보** (HTML→UTF-8 ABAP, 죽은코드 정리, R 컬럼주석)
-- [x] **C2 (5벌 중복 DRY) — 미적용 결정(2026-06-04)**: 5벌 ALV는 접미사만 다른 안정적 보일러플레이트이며, 통합 시 C01/O01/I01/F02 동반·시그니처 변경 + 5화면 전수 테스트 부담 대비 ROI 낮음 → **현행 유지**(의미보존 우선). 향후 필요 시 별도 작업으로 재검토.
+- [x] **C2 (5벌 중복 DRY) — 미적용 결정(2026-06-04)**: 5벌 ALV는 접미사만 다른 안정적 보일러플레이트이며, 통합 시 C01/O01/I01/F02 동반·시그니처 변경 + 5화면 전수 테스트 부담 대비 ROI 낮음 → **현행 유지**(의미보존 우선).
+  - 🔜 **향후 ALV 모던화 시 방향 확정**: [`standards/patterns/ALV_MODERN_PATTERN.md`](../../standards/patterns/ALV_MODERN_PATTERN.md) 기준으로 **5벌→2벌(MAIN/POP)·RTTI 필드카탈로그·단일 이벤트클래스·컨트롤 생명주기** 적용. 진행 시 [`CBO_REVIEW_GUIDE`](../../standards/CBO_REVIEW_GUIDE.md) §6 사전 점검 + 5화면 단위테스트 필수. (별도 요청 시 착수)
 
 ### 누적 정리 효과
 - 죽은 주석코드 총 **약 507줄 제거** (F01 231 + 기타 276), 라이브 코드 0건 변경

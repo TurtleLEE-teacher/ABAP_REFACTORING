@@ -1,9 +1,13 @@
 # ⚡ [SKILL] ABAP 코드 리팩토링
 
 > **ABAP 코드 표준 SSOT**
-> 본 스킬은 코드 표준을 자체 정의하지 않고 [`../standards/ABAP_CODE_STANDARD.md`](../standards/ABAP_CODE_STANDARD.md)를
-> **위임 참조**한다. (원본 출처: Notion `[SKILL]_Functional_Spec_작성`의 💻 ABAP 코드 표준 탭)
-> 표준이 갱신되면 본 스킬의 출력도 자동으로 동기화된다. 본 문서의 모든 "근거(FS §N)"는 SSOT 문서의 섹션 번호를 가리킨다.
+> 본 스킬은 코드 표준을 자체 정의하지 않고 [`../standards/`](../standards/README.md)를 **위임 참조**한다:
+> - [`standards/CBO_REVIEW_GUIDE.md`](../standards/CBO_REVIEW_GUIDE.md) — 리뷰 기준·판단 원칙·사전 점검 체크리스트 (정본)
+> - [`standards/ABAP_CODE_STANDARD.md`](../standards/ABAP_CODE_STANDARD.md) — SQL/주석/SORT·CLEAR 세부 (FS §1~§8)
+> - [`standards/patterns/ALV_MODERN_PATTERN.md`](../standards/patterns/ALV_MODERN_PATTERN.md) — 모던 ALV 코드 스켈레톤
+>
+> ⚖️ **메타원칙 = 가독성/유지보수 우선** (성능·모던화는 그 다음, 가독성 향상 시에만). 표준 충돌 시 [`standards/README.md`](../standards/README.md)의 우선순위를 따른다.
+> 본 문서의 "근거(FS §N)"는 `ABAP_CODE_STANDARD.md`의 섹션 번호를 가리킨다.
 
 ---
 
@@ -115,7 +119,22 @@
 - **에러 메시지 → 메시지 클래스**: 인라인 문자열을 T100 메시지로 분리
 - **TRY-CATCH 표준화**: CX_ROOT 캐치 금지, 구체 예외만 캐치
 - **GLOBAL 변수 → LOCAL 변수**: 가능한 경우 로컬 스코프로 축소
-- **FIELD-SYMBOL 일관 사용**: LOOP INTO + MODIFY 패턴 → ASSIGNING 패턴 (FS §3)
+- **FIELD-SYMBOL 일관 사용**: LOOP INTO + MODIFY 패턴 → ASSIGNING 패턴 — ⚖️ **가독성 향상 시에만**(메타원칙). 단순 LOOP INTO는 유지 허용 (FS §3 / CBO_REVIEW_GUIDE §2-8)
+- **Z/Y CBO 오브젝트 네이밍**: 모호한 Z*/Y* 이름 발견 시 → 더 명확한 이름 **제안 → 사용자 확인 → 반영**. 딕셔너리 등록 객체는 **Where-Used 영향도 명시**, 범위 초과(테이블명 변경 등)는 별도 권고로 분리 (CBO_REVIEW_GUIDE §2-7)
+
+#### 🖥️ S/4 모던 ALV 트랙 (M 모드 하위 — 고위험·옵션, 게이트 필요)
+
+<aside>
+🖥️ <b>구식 ALV(필드카탈로그/컨테이너/5벌 중복) 현대화.</b> To-Be 방향은 <a href="../standards/patterns/ALV_MODERN_PATTERN.md">patterns/ALV_MODERN_PATTERN.md</a> 스켈레톤을 그대로 따른다.
+</aside>
+
+- **5벌(_100~500) → 2벌(MAIN 풀스크린 / POP 팝업)**: 화면번호가 아닌 **역할 기준** 통합
+- **필드카탈로그**: `REUSE_ALV_FIELDCATALOG_MERGE`+수동 append → **RTTI(`CL_SALV_DATA_DESCR=>READ_STRUCTDESCR`) 자동생성** + CASE 커스터마이징 + `_LMC_SET_TEXT` 매크로. 금액/수량은 **`CFIELDNAME`/`QFIELDNAME` 필수**
+- **객체 생성/호출**: `CREATE OBJECT`→`NEW`, `CALL METHOD ... EXPORTING`→**메서드 체이닝**
+- **이벤트**: 클래스 5~6벌 → **단일 `LCL_EVENT_RECEIVER` + `SENDER` 분기**, `CREATE_EVENT_RECEIVER` 공통 등록
+- **컨테이너 생명주기 철칙**: 풀스크린=`SCREEN0`/팝업=`DOCKING`, 자식 컨트롤은 **FREE 금지(CLEAR만)**, 팝업은 **"열기 직전" 해제**, FREE 후 **`CL_GUI_CFW=>FLUSH`**
+- **`LIKE`→`TYPE`**, 동적테이블(`ASSIGN (name)`)→고정 `TYPES` 전환 (그룹코드가 고정일 때)
+- ⚠️ 화면 횡단·시그니처 변경 → **디렉터 게이트 + 전 화면 단위테스트 필수**
 
 ### 모드 P: 성능 (Performance) — 옵션
 
@@ -325,15 +344,28 @@ Q: 📋 변경 사유 표 5컬럼(항목/의도/근거/리스크/Rollback)이 �
 Q: ✅ 적용 체크리스트 + Rollback 포인트가 포함되었는가? A: ✅/❌
 Q: 의미 보존(SY-SUBRC/부수효과/한국어 주석)이 검증되었는가? A: ✅/❌
 Q: P 모드 적용 시 단위 테스트 가이드가 포함되었는가? A: ✅/❌
+Q: (ALV/화면 변경 시) 아래 사전 점검 체크리스트를 통과했는가? A: ✅/❌/➖
 → 전부 ✅ → 완료 → Exit Code: PASS(0)
 → ❌ 하나라도 → 해당 섹션 보완 → Exit Code: BLOCK(2)
 ```
+
+### 사전 점검 체크리스트 (ALV/화면 리팩토링 시 — 출력 전 자가점검)
+
+> 출처: [`../standards/CBO_REVIEW_GUIDE.md`](../standards/CBO_REVIEW_GUIDE.md) §6. 컴파일 덤프·런타임 오류 사전 차단용.
+
+- **컴파일**: FORM 파라미터 타입 호출부 일치(`STRING` vs `LVC_FNAME` 등) / `TABLES`는 SELECT-OPTIONS용만 / `MESSAGE-ID` 유효 / INCLUDE 순서(TOP→CLS→SCR→O01→I01→F01→F02)
+- **ALV·GUI**: 풀스크린=`SCREEN0`·팝업=`DOCKING` / 팝업 컨트롤 "열기 직전" 해제 / HTML Viewer는 `CLEAR`만 / FREE 후 `CL_GUI_CFW=>FLUSH` / 금액·수량 필드 `CFIELDNAME`·`QFIELDNAME` / 텍스트 기호 빈값 없음 / `PF-STATUS` 존재(SE41)
+- **Screen Flow**: PBO MODULE명 일치 / PAI `USER_COMMAND` 누락 없음 / `EXIT_COMMAND`는 `AT EXIT-COMMAND`
+- **데이터**: `CONCATENATE`에 `RESPECTING BLANKS`+CHAR 조합 없음 / 동적→정적 전환 시 그룹코드 고정 확인 / `MOVE-CORRESPONDING` 필드 매핑 확인
 
 ---
 
 ## 🔗 연관 문서
 
-- [`../standards/ABAP_CODE_STANDARD.md`](../standards/ABAP_CODE_STANDARD.md) — **ABAP 코드 표준 SSOT** (전면 위임 참조)
+- [`../standards/README.md`](../standards/README.md) — **표준 인덱스 + 우선순위(메타원칙)**
+- [`../standards/CBO_REVIEW_GUIDE.md`](../standards/CBO_REVIEW_GUIDE.md) — 리뷰 기준·판단 원칙·사전 점검 체크리스트 (정본)
+- [`../standards/ABAP_CODE_STANDARD.md`](../standards/ABAP_CODE_STANDARD.md) — SQL/주석/SORT·CLEAR 세부 SSOT (FS §1~§8)
+- [`../standards/patterns/ALV_MODERN_PATTERN.md`](../standards/patterns/ALV_MODERN_PATTERN.md) — 모던 ALV 코드 스켈레톤
 - [`../templates/REPORT_TEMPLATE.md`](../templates/REPORT_TEMPLATE.md) — 산출 리포트 3종 세트 템플릿
 - [`../refactorings/README.md`](../refactorings/README.md) — 작업물 명명 규칙 + 인덱스
 

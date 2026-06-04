@@ -1,5 +1,9 @@
 # ABAP CBO 코드 리팩토링 - 리뷰 기준 가이드
 
+> **표준 위치/역할 (정본)**: 본 문서는 ABAP 리팩토링의 **리뷰 기준·판단 원칙·사전 점검 체크리스트 SSOT**다.
+> 메타원칙은 **가독성/유지보수 우선**이며, 표준 간 우선순위는 [`README.md`](./README.md)를 따른다.
+> 모던 ALV 코드 스켈레톤은 [`patterns/ALV_MODERN_PATTERN.md`](./patterns/ALV_MODERN_PATTERN.md), SQL/주석/SORT·CLEAR 세부는 [`ABAP_CODE_STANDARD.md`](./ABAP_CODE_STANDARD.md) 참조.
+
 ## 1. 프로젝트 개요
 
 - **목적:** 기존 ABAP CBO(Customer Bolt-On) 로직의 코드 가독성 및 유지보수성 개선

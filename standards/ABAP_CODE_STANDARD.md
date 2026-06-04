@@ -184,6 +184,11 @@ ENDLOOP.
 
 ## §3. S/4 HANA 신구문(Modern ABAP) 활용
 
+> ⚖️ **메타원칙 적용 (가독성 우선)**: 본 절의 신구문(인라인 `@DATA`, `VALUE/FOR/REDUCE/COND`, `FIELD-SYMBOL`)은
+> [`CBO_REVIEW_GUIDE.md`](./CBO_REVIEW_GUIDE.md)의 메타원칙에 따라 **"가독성이 향상될 때만"** 적용한다.
+> 기존 `LOOP AT ... INTO` / `MOVE-CORRESPONDING` / `READ ... BINARY SEARCH`가 더 읽기 쉬우면 **유지**한다.
+> (우선순위: [`README.md`](./README.md))
+
 #### 인라인 데이터 선언
 
 ```abap

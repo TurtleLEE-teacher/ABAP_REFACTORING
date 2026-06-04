@@ -12,8 +12,12 @@ ABAP 원소스(**As-Is**)를 받아 3가지 모드로 리팩토링(**To-Be**)하
 ```
 ABAP_REFACTORING/
 ├── README.md                         # 이 문서 (저장소 전체 가이드)
-├── standards/
-│   └── ABAP_CODE_STANDARD.md         # ⭐ SSOT: ABAP 코드 표준 8개 섹션 (모든 판정 근거)
+├── standards/                        # ⭐ 표준 SSOT (메타원칙: 가독성/유지보수 우선)
+│   ├── README.md                     # 표준 인덱스 + 문서 우선순위
+│   ├── CBO_REVIEW_GUIDE.md           # 리뷰 기준·판단 원칙·사전 점검 체크리스트 (정본)
+│   ├── ABAP_CODE_STANDARD.md         # SQL/주석/SORT·CLEAR 세부 (FS §1~§8)
+│   └── patterns/
+│       └── ALV_MODERN_PATTERN.md     # 모던 ALV 코드 스켈레톤 (5벌→2벌/RTTI/단일이벤트)
 ├── skill/
 │   └── ABAP_REFACTORING_SKILL.md     # 리팩토링 스킬 정의서 (모드/프로세스/규칙)
 ├── templates/
@@ -76,7 +80,10 @@ ABAP_REFACTORING/
 
 ## 🔗 핵심 문서
 
-- ⭐ [`standards/ABAP_CODE_STANDARD.md`](./standards/ABAP_CODE_STANDARD.md) — ABAP 코드 표준 **SSOT**
+- ⭐ [`standards/README.md`](./standards/README.md) — **표준 인덱스 + 우선순위** (메타원칙: 가독성/유지보수 우선)
+  - [`standards/CBO_REVIEW_GUIDE.md`](./standards/CBO_REVIEW_GUIDE.md) — 리뷰 기준·판단 원칙·사전 점검 체크리스트 (정본)
+  - [`standards/ABAP_CODE_STANDARD.md`](./standards/ABAP_CODE_STANDARD.md) — SQL/주석/SORT·CLEAR 세부 SSOT
+  - [`standards/patterns/ALV_MODERN_PATTERN.md`](./standards/patterns/ALV_MODERN_PATTERN.md) — 모던 ALV 코드 스켈레톤
 - [`skill/ABAP_REFACTORING_SKILL.md`](./skill/ABAP_REFACTORING_SKILL.md) — 리팩토링 스킬 정의서
 - [`templates/REPORT_TEMPLATE.md`](./templates/REPORT_TEMPLATE.md) — 리포트 템플릿
 - [`refactorings/README.md`](./refactorings/README.md) — 작업물 명명 규칙 + 인덱스
