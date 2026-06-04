@@ -197,9 +197,16 @@ ENDFORM.
 - [x] C1 파일럿 (`GET_GROUP_ZMMT0010`)
 - [x] C1 배치 1 — `to-be/zmmpar52000f01.abap` 생성 (파일럿 + LT_SUM2 SORT)
 - [x] C1 배치 2 — `MATERIAL_DOC_BASIC_STOCK` 7 SELECT **컬럼 한글주석 67개** + 집계 CTE 설명 (alias 현행 유지 확정)
-- [x] **M(정리) — F01 죽은 주석코드 231줄 제거** (주석처리된 PERFORM/DELETE/FIELDCAT 블록 등) → [`CLEANUP_LOG_f01.md`](./CLEANUP_LOG_f01.md)
-- [ ] C1 배치 3 (선택) — 잔여 소형 SELECT(`CHECK_INPUT`/`SHOW_GROUP_RAW`/`CO_AMT` 등) 주석
-- [ ] C4 (스타일 표준화) → ⏸️ 게이트 → C3 (구조체 통합) → C2 (5벌 DRY)
+- [x] **M(정리) — F01 죽은 주석코드 231줄 제거** → [`CLEANUP_LOG_f01.md`](./CLEANUP_LOG_f01.md)
+- [x] **F02 + 소형 INCLUDE 전체 처리** — to-be 6종 생성, 죽은코드 **276줄 제거** + F02 컬럼주석 82개 → [`CLEANUP_LOG_others.md`](./CLEANUP_LOG_others.md)
+  - F02(252)·TOP(7)·C01(2)·SCR(1)·O01(14)·I01(0). 무결성: FORM/MODULE/CLASS 전부 보존
+- [x] **전체 to-be 7개 INCLUDE 클린본 확보** (HTML→UTF-8 ABAP, 죽은코드 정리, R 컬럼주석)
+- [ ] ⏸️ **게이트 → C2 (5벌 중복 DRY)** — ALV 100~500 파라미터화 (고위험·대형, 진입 전 확인)
+
+### 누적 정리 효과
+- 죽은 주석코드 총 **약 507줄 제거** (F01 231 + 기타 276), 라이브 코드 0건 변경
+- SQL 컬럼 한글주석 총 **약 149개** (F01 67 + GET_GROUP + F02 82)
+- 모든 제거분 로그화 + `as-is/`·git 복구 가능
 
 > **alias 정책 확정(2026-06-04)**: 다중 JOIN SQL은 **컬럼 한글주석만 적용, alias 현행 유지**(재정렬 미적용 — 변경폭/검증부담 회피, 의미보존 우선).
 >
