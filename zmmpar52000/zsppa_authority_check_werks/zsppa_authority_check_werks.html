@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=KSC5601" />
+<title>ZSPPA_AUTHORITY_CHECK_WERKS</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for function ZSPPA_AUTHORITY_CHECK_WERKS</h2>
+<h3> Description: [공통] 플랜트 권한 검증</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION ZSPPA_AUTHORITY_CHECK_WERKS.<br />
+   </div>
+   <div class="codeComment">
+*"----------------------------------------------------------------------<br />
+*"*"Local interface:<br />
+*"  IMPORTING<br />
+*"     REFERENCE(IV_WERKS) TYPE  WERKS_D OPTIONAL<br />
+*"  EXPORTING<br />
+*"     REFERENCE(EV_MSGTYPE) TYPE  BAPI_MTYPE<br />
+*"     REFERENCE(EV_MESSAGE) TYPE  BAPI_MSG<br />
+*"  TABLES<br />
+*"      IT_RANGE_WERKS STRUCTURE  BAPIDLV_RANGE_WERKS OPTIONAL<br />
+*"----------------------------------------------------------------------<br />
+*       Global data declarations<br />
+<br />
+
+<div class="codeComment">*       <a href ="global-zsppa_authority_check_werks.html">Global data declarations</a></div><br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;DATA:&nbsp;LR_WERKS&nbsp;TYPE&nbsp;RANGE&nbsp;OF&nbsp;T001W-WERKS,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_LOW&nbsp;&nbsp;&nbsp;TYPE&nbsp;STRING&nbsp;VALUE&nbsp;'1000',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HIGH&nbsp;&nbsp;TYPE&nbsp;STRING&nbsp;VALUE&nbsp;'2999',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_SAPID&nbsp;TYPE&nbsp;ZPASPT0002-CODE1,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_USR21&nbsp;TYPE&nbsp;ZPASPT0002-IN_ACT.<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;EV_MSGTYPE,&nbsp;EV_MESSAGE.<br />
+<br />
+<br />
+&nbsp;&nbsp;"&nbsp;U02&nbsp;:&nbsp;PSQ&nbsp;250&nbsp;client&nbsp;/&nbsp;PSP&nbsp;만&nbsp;권한&nbsp;검증<br />
+&nbsp;&nbsp;CASE&nbsp;SY-SYSID.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'PSD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RETURN.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'PSQ'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;SY-MANDT&nbsp;NE&nbsp;250.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RETURN.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;LV_SAPID,&nbsp;LV_USR21.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;1.&nbsp;관리자(Pass)&nbsp;계정&nbsp;여부&nbsp;우선&nbsp;확인<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;CODE1,&nbsp;USR21<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ZPASPT0002<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;CODE&nbsp;&nbsp;&nbsp;EQ&nbsp;'MD013'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;IN_ACT&nbsp;NE&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;CODE1&nbsp;&nbsp;EQ&nbsp;@SY-UNAME<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;(@LV_SAPID,&nbsp;@LV_USR21).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;SY-SUBRC&nbsp;EQ&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;LV_USR21&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;USR21&nbsp;&lt;&gt;&nbsp;'X'&nbsp;-&gt;&nbsp;권한&nbsp;로직&nbsp;함수/클래스&nbsp;Return<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RETURN.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;USR21&nbsp;=&nbsp;'X'&nbsp;-&gt;&nbsp;권한&nbsp;로직&nbsp;수행<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;2.&nbsp;공통&nbsp;코드에&nbsp;미등록된&nbsp;SAP&nbsp;ID&nbsp;하기&nbsp;로직&nbsp;수행<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;STRLEN(&nbsp;SY-CPROG&nbsp;)&nbsp;&gt;=&nbsp;3&nbsp;AND&nbsp;(&nbsp;SY-CPROG+1(2)&nbsp;=&nbsp;'SD'&nbsp;OR&nbsp;SY-CPROG+1(2)&nbsp;=&nbsp;'MM'&nbsp;).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;3.&nbsp;SD/MM&nbsp;프로그램&nbsp;'26.04.08&nbsp;06:00&nbsp;부터&nbsp;사용&nbsp;가능<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;SY-DATUM&nbsp;&lt;&nbsp;'20260408'&nbsp;OR&nbsp;(&nbsp;SY-DATUM&nbsp;=&nbsp;'20260408'&nbsp;AND&nbsp;SY-UZEIT&nbsp;&lt;&nbsp;'060000'&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;'프로그램&nbsp;사용&nbsp;가능&nbsp;기간이&nbsp;아닙니다.&nbsp;(오픈&nbsp;예정일:&nbsp;2026.04.08&nbsp;08:00&nbsp;KST)'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;'S'&nbsp;DISPLAY&nbsp;LIKE&nbsp;'E'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LEAVE&nbsp;PROGRAM.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'PSP'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;LV_SAPID,&nbsp;LV_USR21.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;1.&nbsp;관리자(Pass)&nbsp;계정&nbsp;여부&nbsp;우선&nbsp;확인<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;CODE1,&nbsp;USR21<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ZPASPT0002<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;CODE&nbsp;&nbsp;&nbsp;EQ&nbsp;'MD013'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;IN_ACT&nbsp;NE&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;CODE1&nbsp;&nbsp;EQ&nbsp;@SY-UNAME<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;(@LV_SAPID,&nbsp;@LV_USR21).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;SY-SUBRC&nbsp;EQ&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;LV_USR21&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;USR21&nbsp;&lt;&gt;&nbsp;'X'&nbsp;-&gt;&nbsp;권한&nbsp;로직&nbsp;함수/클래스&nbsp;Return<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RETURN.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;USR21&nbsp;=&nbsp;'X'&nbsp;-&gt;&nbsp;권한&nbsp;로직&nbsp;수행<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;2.&nbsp;공통&nbsp;코드에&nbsp;미등록된&nbsp;SAP&nbsp;ID&nbsp;하기&nbsp;로직&nbsp;수행<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;STRLEN(&nbsp;SY-CPROG&nbsp;)&nbsp;&gt;=&nbsp;3&nbsp;AND&nbsp;(&nbsp;SY-CPROG+1(2)&nbsp;=&nbsp;'SD'&nbsp;OR&nbsp;SY-CPROG+1(2)&nbsp;=&nbsp;'MM'&nbsp;).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;3.&nbsp;SD/MM&nbsp;프로그램&nbsp;'26.04.08&nbsp;06:00&nbsp;부터&nbsp;사용&nbsp;가능<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;SY-DATUM&nbsp;&lt;&nbsp;'20260408'&nbsp;OR&nbsp;(&nbsp;SY-DATUM&nbsp;=&nbsp;'20260408'&nbsp;AND&nbsp;SY-UZEIT&nbsp;&lt;&nbsp;'060000'&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;'프로그램&nbsp;사용&nbsp;가능&nbsp;기간이&nbsp;아닙니다.&nbsp;(오픈&nbsp;예정일:&nbsp;2026.04.08&nbsp;08:00&nbsp;KST)'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;'S'&nbsp;DISPLAY&nbsp;LIKE&nbsp;'E'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LEAVE&nbsp;PROGRAM.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDCASE.<br />
+<br />
+&nbsp;&nbsp;"if&nbsp;it_range_tables[]&nbsp;is&nbsp;initial&nbsp;,&nbsp;then&nbsp;all&nbsp;ranges.<br />
+&nbsp;&nbsp;IF&nbsp;&nbsp;IV_WERKS&nbsp;IS&nbsp;NOT&nbsp;INITIAL&nbsp;AND&nbsp;IT_RANGE_WERKS[]&nbsp;&nbsp;IS&nbsp;NOT&nbsp;INITIAL&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EV_MSGTYPE&nbsp;&nbsp;=&nbsp;GC_E.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;S000&nbsp;WITH&nbsp;TEXT-F01&nbsp;INTO&nbsp;EV_MESSAGE.&nbsp;"&nbsp;Input&nbsp;Import&nbsp;parameter&nbsp;or&nbsp;range&nbsp;tables<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;LR_WERKS,&nbsp;LR_WERKS[].<br />
+&nbsp;&nbsp;IF&nbsp;IV_WERKS&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;VALUE&nbsp;#(&nbsp;SIGN&nbsp;=&nbsp;GC_I&nbsp;OPTION&nbsp;=&nbsp;GC_EQ&nbsp;LOW&nbsp;=&nbsp;IV_WERKS&nbsp;)&nbsp;TO&nbsp;LR_WERKS.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LR_WERKS[]&nbsp;=&nbsp;IT_RANGE_WERKS[].<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;SELECT&nbsp;T001W~WERKS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;T001W<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INNER&nbsp;JOIN&nbsp;ADRC&nbsp;ON&nbsp;T001W~ADRNR&nbsp;=&nbsp;ADRC~ADDRNUMBER<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;T001W~WERKS&nbsp;IN&nbsp;@LR_WERKS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;T001W~ACHVM&nbsp;NE&nbsp;@GC_X<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;T001W~WERKS&nbsp;BETWEEN&nbsp;@LV_LOW&nbsp;AND&nbsp;@LV_HIGH<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@DATA(LT_WERKS).<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;LT_WERKS[]&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EV_MSGTYPE&nbsp;&nbsp;=&nbsp;GC_E.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;S000&nbsp;WITH&nbsp;TEXT-F03&nbsp;INTO&nbsp;EV_MESSAGE.&nbsp;"&nbsp;Plant&nbsp;is&nbsp;not&nbsp;exist&nbsp;for&nbsp;this&nbsp;condition'&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*  LOOP AT LT_WERKS INTO DATA(LS_WERKS).<br />
+*    AUTHORITY-CHECK OBJECT 'ZWERKS' ID 'WERKS' FIELD LS_WERKS-WERKS.<br />
+*    IF SY-SUBRC &lt;&gt; 0.<br />
+*      EV_MSGTYPE  = GC_E.<br />
+*      MESSAGE S112 INTO EV_MESSAGE.<br />
+*      EV_MESSAGE = |{ EV_MESSAGE } ({ LS_WERKS-WERKS })|.<br />
+*      EXIT.<br />
+*    ENDIF.<br />
+*  ENDLOOP.<br />
+*<br />
+*  IF EV_MSGTYPE IS INITIAL.<br />
+*    EV_MSGTYPE = GC_S.<br />
+*  ENDIF.<br />
+<br />
+*&---------------------------------------------------------------------*<br />
+*& Patch : ZSPPA_AUTHORITY_CHECK_WERKS<br />
+*& Updated  : 2026.04.22. BP30763  (U03)<br />
+*&---------------------------------------------------------------------*<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;LT_WERKS&nbsp;INTO&nbsp;DATA(LS_WERKS).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AUTHORITY-CHECK&nbsp;OBJECT&nbsp;'ZWERKS'&nbsp;ID&nbsp;'WERKS'&nbsp;FIELD&nbsp;LS_WERKS-WERKS.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;SY-SUBRC&nbsp;&lt;&gt;&nbsp;0.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*.---- BEGIN U03 : ZPASPR0130 보충 권한 체크 ----------------------------<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;CBO&nbsp;권한&nbsp;실패한&nbsp;WERKS&nbsp;값이&nbsp;권한관리시스템(ZPASPT0130/0131)&nbsp;에<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;등록된&nbsp;보충&nbsp;권한과&nbsp;매칭되면&nbsp;통과(CONTINUE)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DATA&nbsp;:&nbsp;LV_PERNR_Z&nbsp;&nbsp;TYPE&nbsp;ZE_PERNR_C,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_TCODE_Z&nbsp;&nbsp;TYPE&nbsp;TCODE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HDR_OK_Z&nbsp;TYPE&nbsp;ABAP_BOOL,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HIT_Z&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;ABAP_BOOL.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;:&nbsp;LV_PERNR_Z,&nbsp;LV_TCODE_Z,&nbsp;LV_HDR_OK_Z,&nbsp;LV_HIT_Z.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;포털&nbsp;SSO&nbsp;사번&nbsp;(ZPERNR)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GET&nbsp;PARAMETER&nbsp;ID&nbsp;'ZPERNR'&nbsp;FIELD&nbsp;LV_PERNR_Z.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;LV_PERNR_Z&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_TCODE_Z&nbsp;=&nbsp;SY-TCODE.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;헤더(ZPASPT0130)&nbsp;:&nbsp;Active&nbsp;+&nbsp;valid&nbsp;rows&nbsp;for&nbsp;PERNR&nbsp;-&gt;&nbsp;match&nbsp;TCODE<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;TCODE&nbsp;매칭&nbsp;규칙:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;exact&nbsp;match&nbsp;(e.g.&nbsp;'FB60'&nbsp;=&nbsp;'FB60')<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;'*'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(grant&nbsp;ALL&nbsp;t-codes)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;CP&nbsp;pattern&nbsp;&nbsp;(e.g.&nbsp;'ZFI*'&nbsp;covers&nbsp;ZFI01,&nbsp;ZFI02,&nbsp;...)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;TCODE<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ZPASPT0130<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@DATA(LT_HDR_Z)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;PERNR&nbsp;&nbsp;&nbsp;&nbsp;EQ&nbsp;@LV_PERNR_Z<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;ACTIVE&nbsp;&nbsp;&nbsp;EQ&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;VALID_FR&nbsp;LE&nbsp;@SY-DATUM<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;VALID_TO&nbsp;GE&nbsp;@SY-DATUM.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;LT_HDR_Z&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;LS_HDR_Z&gt;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;LS_HDR_Z&gt;-TCODE&nbsp;EQ&nbsp;'*'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OR&nbsp;&lt;LS_HDR_Z&gt;-TCODE&nbsp;EQ&nbsp;LV_TCODE_Z<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OR&nbsp;LV_TCODE_Z&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CP&nbsp;&lt;LS_HDR_Z&gt;-TCODE.&nbsp;&nbsp;&nbsp;"&nbsp;e.g.&nbsp;ZFI*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HDR_OK_Z&nbsp;=&nbsp;ABAP_TRUE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;LV_HDR_OK_Z&nbsp;EQ&nbsp;ABAP_TRUE.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;상세(ZPASPT0131)&nbsp;:&nbsp;Lines&nbsp;for&nbsp;PERNR&nbsp;+&nbsp;AUTH_OBJ='ZWERKS'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;Per-line&nbsp;evaluation&nbsp;order:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(1)&nbsp;TCODE&nbsp;match&nbsp;(exact&nbsp;/&nbsp;'*'&nbsp;/&nbsp;CP&nbsp;pattern&nbsp;e.g.&nbsp;ZFI*)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(2)&nbsp;LOW&nbsp;=&nbsp;'*'&nbsp;&nbsp;-&gt;&nbsp;grant&nbsp;ALL&nbsp;values&nbsp;for&nbsp;this&nbsp;AUTH_OBJ<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(3)&nbsp;OPTIONS&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;EQ/BT/CP&nbsp;value&nbsp;evaluation<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;TCODE,&nbsp;LOW,&nbsp;HIGH,&nbsp;OPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ZPASPT0131<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@DATA(LT_OVR_Z)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;PERNR&nbsp;&nbsp;&nbsp;&nbsp;EQ&nbsp;@LV_PERNR_Z<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;AUTH_OBJ&nbsp;EQ&nbsp;'ZWERKS'.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;LT_OVR_Z&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;LS_OVR_Z&gt;).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;(1)&nbsp;TCODE&nbsp;match<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;LS_OVR_Z&gt;-TCODE&nbsp;NE&nbsp;'*'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;&lt;LS_OVR_Z&gt;-TCODE&nbsp;NE&nbsp;LV_TCODE_Z<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;NOT&nbsp;(&nbsp;LV_TCODE_Z&nbsp;CP&nbsp;&lt;LS_OVR_Z&gt;-TCODE&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONTINUE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;(2)&nbsp;LOW&nbsp;=&nbsp;'*'&nbsp;-&gt;&nbsp;grant&nbsp;all&nbsp;values&nbsp;for&nbsp;this&nbsp;auth&nbsp;object<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;LS_OVR_Z&gt;-LOW&nbsp;EQ&nbsp;'*'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HIT_Z&nbsp;=&nbsp;ABAP_TRUE.&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;(3)&nbsp;OPTIONS&nbsp;evaluation<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CASE&nbsp;&lt;LS_OVR_Z&gt;-OPTIONS.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'EQ'&nbsp;OR&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;LS_WERKS-WERKS&nbsp;EQ&nbsp;&lt;LS_OVR_Z&gt;-LOW.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HIT_Z&nbsp;=&nbsp;ABAP_TRUE.&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'BT'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;LS_OVR_Z&gt;-HIGH&nbsp;IS&nbsp;NOT&nbsp;INITIAL&nbsp;AND<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LS_WERKS-WERKS&nbsp;BETWEEN&nbsp;&lt;LS_OVR_Z&gt;-LOW&nbsp;AND&nbsp;&lt;LS_OVR_Z&gt;-HIGH.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HIT_Z&nbsp;=&nbsp;ABAP_TRUE.&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'CP'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;LS_WERKS-WERKS&nbsp;CP&nbsp;&lt;LS_OVR_Z&gt;-LOW.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LV_HIT_Z&nbsp;=&nbsp;ABAP_TRUE.&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDCASE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;보충권한&nbsp;HIT&nbsp;→&nbsp;다음&nbsp;WERKS&nbsp;값으로&nbsp;(현재&nbsp;값은&nbsp;통과)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;LV_HIT_Z&nbsp;EQ&nbsp;ABAP_TRUE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONTINUE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*.---- END U03 ---------------------------------------------------------<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EV_MSGTYPE&nbsp;&nbsp;=&nbsp;GC_E.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;S112&nbsp;INTO&nbsp;EV_MESSAGE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EV_MESSAGE&nbsp;=&nbsp;|{&nbsp;EV_MESSAGE&nbsp;}&nbsp;({&nbsp;LS_WERKS-WERKS&nbsp;})|.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;EV_MSGTYPE&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EV_MSGTYPE&nbsp;=&nbsp;GC_S.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFUNCTION.<br />
+<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Messages<br />
+*----------------------------------------------------------<br />
+*<br />
+* Message class: BK<br />
+*874   하나의 행만 선택하십시오.<br />
+*<br />
+* Message class: Hard coded<br />
+*   프로그램 사용 가능 기간이 아닙니다. (오픈 예정일: 2026.04.08 08:00 KST)<br />
+*<br />
+* Message class: KK<br />
+*398   마이크로소프트에 연결하는 것은 실패했습니다<br />
+*<br />
+* Message class: LXE_EXPORT<br />
+*018   표준 번역을 생성하는 동안 오류가 발생했습니다.<br />
+*<br />
+* Message class: P0<br />
+*438   예<br />
+*439   아니오<br />
+*<br />
+* Message class: RSSDK<br />
+*036   선택한 행이 없습니다.<br />
+*<br />
+* Message class: SD<br />
+*819   표준번역 텍스트를 저장했습니다<br />
+*<br />
+* Message class: ZMCPA01<br />
+*000   &1 &2 &3 &4<br />
+*012   저장을 실패하였습니다.<br />
+*111   회사코드 권한이 없습니다.<br />
+*112   플랜트 권한이 없습니다.<br />
+*119   사업부 권한이 없습니다.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 755</td>
+   </tr>
+</table>
+</body>
+</html>

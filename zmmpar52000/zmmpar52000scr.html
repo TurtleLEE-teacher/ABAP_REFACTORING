@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=KSC5601" />
+<title>ZMMPAR52000SCR</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for: ZMMPAR52000SCR</h2>
+<h3> Description: Include ZMMMAM36100SCR</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Include&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZMMMAM36100SCR<br />
+*&---------------------------------------------------------------------*<br />
+*----------------------------------------------------------------------*<br />
+*&nbsp;SELECTION&nbsp;SCREEN<br />
+*----------------------------------------------------------------------*<br />
+<br />
+   </div>
+   <div class="code">
+SELECTION-SCREEN BEGIN OF BLOCK B1 WITH FRAME TITLE TEXT-005.<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;BEGIN&nbsp;OF&nbsp;LINE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PARAMETERS&nbsp;:&nbsp;RB_MM&nbsp;TYPE&nbsp;C&nbsp;RADIOBUTTON&nbsp;GROUP&nbsp;R01&nbsp;DEFAULT&nbsp;'X'&nbsp;USER-COMMAND&nbsp;UC1&nbsp;MODIF&nbsp;ID&nbsp;R01.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECTION-SCREEN&nbsp;COMMENT&nbsp;(25)&nbsp;TEXT-R03&nbsp;FOR&nbsp;FIELD&nbsp;RB_MM&nbsp;MODIF&nbsp;ID&nbsp;R01.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PARAMETERS&nbsp;:&nbsp;RB_CO&nbsp;TYPE&nbsp;C&nbsp;RADIOBUTTON&nbsp;GROUP&nbsp;R01&nbsp;MODIF&nbsp;ID&nbsp;&nbsp;R01.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECTION-SCREEN&nbsp;COMMENT&nbsp;(25)&nbsp;TEXT-R04&nbsp;FOR&nbsp;FIELD&nbsp;RB_CO&nbsp;MODIF&nbsp;ID&nbsp;R01.<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;END&nbsp;OF&nbsp;LINE.<br />
+SELECTION-SCREEN END OF BLOCK B1.<br />
+<br />
+SELECTION-SCREEN BEGIN OF BLOCK BLOCK1 WITH FRAME TITLE TEXT-001.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*PARAMETERS&nbsp;:&nbsp;P_LFGJA&nbsp;LIKE&nbsp;MBEWH-LFGJA&nbsp;.<br />
+*PARAMETERS&nbsp;:&nbsp;P_LFMON&nbsp;LIKE&nbsp;MBEWH-LFMON&nbsp;.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PARAMETERS&nbsp;:&nbsp;P_SPMON&nbsp;TYPE&nbsp;SPMON&nbsp;DEFAULT&nbsp;SY-DATLO+0(6)&nbsp;MODIF&nbsp;ID&nbsp;CO1.<br />
+&nbsp;&nbsp;SELECT-OPTIONS&nbsp;:&nbsp;S_BUDAT&nbsp;FOR&nbsp;MATDOC-BUDAT&nbsp;OBLIGATORY&nbsp;MODIF&nbsp;ID&nbsp;MM1,&nbsp;&nbsp;"&nbsp;Year,&nbsp;Month&nbsp;를&nbsp;Period&nbsp;로&nbsp;변경&nbsp;/&nbsp;24.08.21<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_BUKRS&nbsp;FOR&nbsp;MATDOC-BUKRS&nbsp;DEFAULT&nbsp;'1088'&nbsp;NO&nbsp;INTERVALS&nbsp;NO-EXTENSION&nbsp;OBLIGATORY,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_WERKS&nbsp;FOR&nbsp;MATDOC-WERKS&nbsp;DEFAULT&nbsp;'1010'&nbsp;NO&nbsp;INTERVALS&nbsp;NO-EXTENSION&nbsp;OBLIGATORY,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_LGORT&nbsp;FOR&nbsp;MATDOC-LGORT,<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_LIFNR&nbsp;FOR&nbsp;MATDOC-LIFNR&nbsp;,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_MTART&nbsp;FOR&nbsp;MARA-MTART,&nbsp;"&nbsp;DEFAULT&nbsp;'HAWA',&nbsp;&nbsp;"Add&nbsp;:&nbsp;2020.12.31&nbsp;"Update&nbsp;:&nbsp;2024.08.07<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_MATNR&nbsp;FOR&nbsp;MATDOC-MATNR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_CHARG&nbsp;FOR&nbsp;MATDOC-CHARG&nbsp;MODIF&nbsp;ID&nbsp;CHG.<br />
+<br />
+SELECTION-SCREEN END OF BLOCK BLOCK1.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***&nbsp;Valuated/Batch&nbsp;Selection<br />
+*SELECTION-SCREEN&nbsp;BEGIN&nbsp;OF&nbsp;BLOCK&nbsp;BLOCK2&nbsp;WITH&nbsp;FRAME&nbsp;TITLE&nbsp;TEXT-002.<br />
+*<br />
+*&nbsp;&nbsp;SELECTION-SCREEN&nbsp;BEGIN&nbsp;OF&nbsp;LINE.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;PARAMETERS:&nbsp;RA_R1&nbsp;RADIOBUTTON&nbsp;GROUP&nbsp;GR1&nbsp;USER-COMMAND&nbsp;SEL.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;SELECTION-SCREEN&nbsp;COMMENT&nbsp;(20)&nbsp;TEXT-R01&nbsp;FOR&nbsp;FIELD&nbsp;RA_R1.&nbsp;&nbsp;&nbsp;"&nbsp;Valuated&nbsp;Stock<br />
+*&nbsp;&nbsp;SELECTION-SCREEN&nbsp;END&nbsp;OF&nbsp;LINE.<br />
+*&nbsp;&nbsp;SELECTION-SCREEN&nbsp;BEGIN&nbsp;OF&nbsp;LINE.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;PARAMETERS:&nbsp;RA_R2&nbsp;RADIOBUTTON&nbsp;GROUP&nbsp;GR1&nbsp;DEFAULT&nbsp;'X'.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;SELECTION-SCREEN&nbsp;COMMENT&nbsp;(40)&nbsp;TEXT-R02&nbsp;FOR&nbsp;FIELD&nbsp;RA_R2.&nbsp;&nbsp;&nbsp;"&nbsp;Batch&nbsp;Stock<br />
+*&nbsp;&nbsp;SELECTION-SCREEN&nbsp;END&nbsp;OF&nbsp;LINE.<br />
+*<br />
+*SELECTION-SCREEN&nbsp;END&nbsp;OF&nbsp;BLOCK&nbsp;BLOCK2.<br />
+<br />
+<br />
+   </div>
+   <div class="code">
+" 2024.09.25 요구사항 추가 : MPI 조회 조건 반영<br />
+   </div>
+   <div class="codeComment">
+**&nbsp;MPI&nbsp;Selection<br />
+   </div>
+   <div class="code">
+SELECTION-SCREEN BEGIN OF BLOCK BLOCK4 WITH FRAME TITLE TEXT-004.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;PARAMETERS&nbsp;:&nbsp;P_VAL1&nbsp;AS&nbsp;CHECKBOX&nbsp;DEFAULT&nbsp;'X',&nbsp;&nbsp;&nbsp;"&nbsp;Non-chargeable&nbsp;Component&nbsp;(V)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P_VAL2&nbsp;AS&nbsp;CHECKBOX&nbsp;DEFAULT&nbsp;'X'.&nbsp;&nbsp;&nbsp;"&nbsp;Chargeable&nbsp;Component&nbsp;(A)<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PARAMETERS&nbsp;:&nbsp;P_VAL9&nbsp;AS&nbsp;CHECKBOX.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;사급자재<br />
+<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;BEGIN&nbsp;OF&nbsp;LINE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECTION-SCREEN&nbsp;COMMENT&nbsp;(79)&nbsp;TEXT-C02.<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;END&nbsp;OF&nbsp;LINE.<br />
+<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;BEGIN&nbsp;OF&nbsp;LINE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECTION-SCREEN&nbsp;COMMENT&nbsp;(70)&nbsp;TEXT-C03.<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;END&nbsp;OF&nbsp;LINE.<br />
+<br />
+SELECTION-SCREEN END OF BLOCK BLOCK4.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**&nbsp;Amount&nbsp;Selection<br />
+   </div>
+   <div class="code">
+SELECTION-SCREEN BEGIN OF BLOCK BLOCK3 WITH FRAME TITLE TEXT-003.<br />
+&nbsp;&nbsp;PARAMETERS&nbsp;:&nbsp;P_VAL&nbsp;AS&nbsp;CHECKBOX&nbsp;MODIF&nbsp;ID&nbsp;CO1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;Amount<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;BEGIN&nbsp;OF&nbsp;LINE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECTION-SCREEN&nbsp;COMMENT&nbsp;(70)&nbsp;TEXT-C01&nbsp;MODIF&nbsp;ID&nbsp;CO1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;If&nbsp;you&nbsp;check&nbsp;the&nbsp;box,&nbsp;you&nbsp;can&nbsp;see&nbsp;amount&nbsp;value.<br />
+&nbsp;&nbsp;SELECTION-SCREEN&nbsp;END&nbsp;OF&nbsp;LINE.<br />
+&nbsp;&nbsp;"This&nbsp;is&nbsp;a&nbsp;reference&nbsp;value.<br />
+SELECTION-SCREEN END OF BLOCK BLOCK3.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 755</td>
+   </tr>
+</table>
+</body>
+</html>
