@@ -54,7 +54,9 @@
 >
 > **합본 완료(2026-06-04)**: 핸들러/비즈니스 FORM(`HANDLE_DOUBLE_CLICK_100~500`, `HANDLE_USER_COMMAND_100/400`, `HANDLER_TOOLBAR(_0400)`, `TOP_OF_PAGE`, `ADD_TEXT`, `ALV_CLASS_REFRESH`, `BUFFER_CLEAR_PROC`)을 `to-be/f02`에서 이관(로직 무변경). 구 변수 재매핑(`GV_ALV_DOCUMENT→GCL_ALV_DOCUMENT`, `GV_ALV_GRID_100/400→GCL_GRID_MAIN`). `HTML_DISPLAY`는 모던판(화면별 컨테이너+`GCL_HTML_VIEWER` CLEAR)으로 교체. **모든 PERFORM 대상 해석 확인, FORM/ENDFORM 25/25.**
 >
-> **SE38 잔여(선택/필수)**: ① (선택) `BUILD_FIELDCAT` 화면별 컬럼 규칙을 구 `BUILD_CATEGORY_200/300/500`에서 이관 — 미적용 시 RTTI 기본(DDIC 텍스트)으로 표시됨 ② (필수) Screen Painter/PF-STATUS/텍스트기호 반영(§4) ③ (필수) 화면 Flow Logic을 단일 모듈명(`CREATE_ALV`/`USER_COMMAND`)으로 통일 ④ (필수) 활성화·5화면 테스트.
+> **필드카탈로그 규칙 이관 완료(2026-06-04)**: `BUILD_FIELDCAT`에 화면별 컬럼 규칙(`FCAT_RULE_0200/0300/0500`)을 구 `BUILD_CATEGORY_200/300/500`에서 이관 — 숨김(NO_OUT)·col_pos·COLTEXT(`TEXT-Fxx`)·DO_SUM·CFIELDNAME/QFIELDNAME·`P_VAL` 조건부 금액컬럼·SIT 강조(C710) 포함. 레거시 `REUSE_ALV_FIELDCATALOG_MERGE` 완전 제거, RTTI(`CL_SALV_DATA_DESCR`)로 대체. 0100/0400은 구 BUILD_CATEGORY가 주석처리였으므로 RTTI 기본 유지.
+>
+> **SE38 잔여(필수)**: ① Screen Painter/PF-STATUS/**텍스트기호(`TEXT-F51~F78`, `N04/N05`)** 등록 확인(§4) ② 화면 Flow Logic을 단일 모듈명(`CREATE_ALV`/`USER_COMMAND`)으로 통일 ③ 활성화(SLIN)·5화면 테스트.
 
 ---
 

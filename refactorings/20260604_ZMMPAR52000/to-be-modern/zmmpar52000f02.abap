@@ -166,7 +166,7 @@ ENDFORM.
 
 *&---------------------------------------------------------------------*
 *& Form BUILD_FIELDCAT  — RTTI 자동생성 + 화면별 컬럼 커스터마이징
-*&   PV_DYNNR: 화면, PT_OUT: 바인딩된 출력 테이블, CT_FCAT: 결과 필드카탈로그
+*&   (구 BUILD_CATEGORY_200/300/500 규칙 이관. 0100/0400은 RTTI 기본)
 *&---------------------------------------------------------------------*
 FORM BUILD_FIELDCAT USING    PV_DYNNR TYPE SY-DYNNR
                              PT_OUT   TYPE ANY TABLE
@@ -182,28 +182,134 @@ FORM BUILD_FIELDCAT USING    PV_DYNNR TYPE SY-DYNNR
           CL_ABAP_STRUCTDESCR=>DESCRIBE_BY_DATA( PT_OUT )
         )->GET_TABLE_LINE_TYPE( ) ) ) ).
 
-  " 화면별 컬럼 커스터마이징 (col_pos / key / text / no_out / do_sum / 통화·수량 참조)
   LOOP AT CT_FCAT ASSIGNING FIELD-SYMBOL(<LS_FCAT>).
     CLEAR <LS_FCAT>-KEY.
 
-    " 공통: 금액/수량 참조 필드 (KRW ×100 방지, FS §3-6)
+    " 공통: 수량 단위/금액 통화 참조 (KRW ×100 방지, FS §3-6)
     CASE <LS_FCAT>-FIELDNAME.
-      WHEN 'MENGE' OR 'CLABS'.            <LS_FCAT>-QFIELDNAME = 'MEINS'. <LS_FCAT>-DO_SUM = ABAP_TRUE.
-      WHEN 'DMBTR' OR 'SALK3' OR 'VERPR'. <LS_FCAT>-CFIELDNAME = 'WAERS'. <LS_FCAT>-DO_SUM = ABAP_TRUE.
-      WHEN 'CELLTAB' OR 'COLINFO' OR 'INFO' OR 'MARK'. <LS_FCAT>-NO_OUT = ABAP_TRUE.
+      WHEN 'MENGE' OR 'WEMNG'.          <LS_FCAT>-QFIELDNAME = 'MEINS'.
+      WHEN 'DMBTR' OR 'NETWR' OR 'SITAMT'. <LS_FCAT>-CFIELDNAME = 'WAERS'.
     ENDCASE.
 
-    " *** TODO(SE38): 화면별 세부 컬럼 규칙(컬럼순서/한글텍스트/숨김)을
-    "     기존 BUILD_CATEGORY_200/300/500 (to-be/zmmpar52000f02.abap)에서 이관 ***
+    " 화면별 컬럼 규칙
     CASE PV_DYNNR.
-      WHEN '0100'.  " 메인(GT_DISP)  — 구 BUILD_CATEGORY_100(주석처리, REUSE 기본)
-      WHEN '0400'.  " 배치(GT_BATCH_0400) — 구 BUILD_CATEGORY_400(주석처리)
-      WHEN '0200'.  " 그룹RAW(GT_RAW_DISP) — 구 BUILD_CATEGORY_200 규칙 이관
-      WHEN '0300'.  " SIT(GT_SIT_DISP)     — 구 BUILD_CATEGORY_300 규칙 이관
-      WHEN '0500'.  " 자재문서(GT_DISP_0500) — 구 BUILD_CATEGORY_500 규칙 이관
+      WHEN '0200'. PERFORM FCAT_RULE_0200 CHANGING <LS_FCAT>.
+      WHEN '0300'. PERFORM FCAT_RULE_0300 CHANGING <LS_FCAT>.
+      WHEN '0500'. PERFORM FCAT_RULE_0500 CHANGING <LS_FCAT>.
+      WHEN OTHERS.  " 0100(메인)/0400(배치): RTTI 기본 (구 BUILD_CATEGORY_100/400 주석처리)
     ENDCASE.
   ENDLOOP.
 
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form FCAT_RULE_0200  — 화면 0200(GT_RAW_DISP) 컬럼 규칙
+*&---------------------------------------------------------------------*
+FORM FCAT_RULE_0200 CHANGING CS TYPE LVC_S_FCAT.
+  " 숨김 컬럼
+  CASE CS-FIELDNAME.
+    WHEN 'BUKRS' OR 'KUNNR' OR 'KUNNR_TX' OR 'LIFNR' OR 'LIFNR_TX'
+      OR 'ZGROUP' OR 'GRUND' OR 'VGART' OR 'BELNR' OR 'GJAHR' OR 'BUZEI'
+      OR 'ZIV_CHK' OR 'ZSP_CHK' OR 'CELLTAB' OR 'COLINFO' OR 'INFO'
+      OR 'MTART' OR 'SLLAB' OR 'CLABS' OR 'SALK3' OR 'LBKUM' OR 'LABST' OR 'STPRS'.
+      CS-NO_OUT = ABAP_TRUE. RETURN.
+  ENDCASE.
+  " 표시 컬럼 (col_pos / 텍스트 / 합계 / 정렬)
+  CASE CS-FIELDNAME.
+    WHEN 'MJAHR'.    CS-COL_POS = 0.  CS-COLTEXT = TEXT-F64. CS-JUST = 'C'.
+    WHEN 'BUDAT'.    CS-COL_POS = 1.  CS-COLTEXT = TEXT-F65.
+    WHEN 'MBLNR'.    CS-COL_POS = 2.  CS-COLTEXT = TEXT-F66.
+    WHEN 'ZEILE'.    CS-COL_POS = 3.  CS-COLTEXT = TEXT-F77.
+    WHEN 'ZZLOGINO'. CS-COL_POS = 4.  CS-COLTEXT = TEXT-F78.
+    WHEN 'MATNR'.    CS-COL_POS = 5.  CS-COLTEXT = TEXT-F51.
+    WHEN 'MAKTX'.    CS-COL_POS = 6.  CS-COLTEXT = TEXT-F52.
+    WHEN 'WERKS'.    CS-COL_POS = 7.  CS-COLTEXT = TEXT-F58.
+    WHEN 'LGORT'.    CS-COL_POS = 8.  CS-COLTEXT = TEXT-F67.
+    WHEN 'CHARG'.    CS-COL_POS = 9.  CS-COLTEXT = TEXT-F68.
+    WHEN 'MENGE'.    CS-COL_POS = 10. CS-COLTEXT = TEXT-F69. CS-DO_SUM = ABAP_TRUE.
+    WHEN 'BWART'.    CS-COL_POS = 12. CS-COLTEXT = TEXT-F71.
+    WHEN 'BTEXT'.    CS-COL_POS = 13. CS-COLTEXT = TEXT-F72.
+    WHEN 'SOBKZ'.    CS-COL_POS = 14. CS-COLTEXT = TEXT-F73. CS-JUST = 'C'.
+    WHEN 'SHKZG'.    CS-COL_POS = 15. CS-COLTEXT = TEXT-F74. CS-JUST = 'C'.
+    WHEN 'MEINS'.    CS-COL_POS = 17. CS-COLTEXT = TEXT-F75.
+    WHEN 'DMBTR'.    " 금액: P_VAL 체크 시만 표시
+      IF P_VAL = ABAP_TRUE.
+        CS-COL_POS = 11. CS-COLTEXT = TEXT-F70. CS-DO_SUM = ABAP_TRUE. CS-CFIELDNAME = 'WAERS'.
+      ELSE.
+        CS-NO_OUT = ABAP_TRUE.
+      ENDIF.
+    WHEN 'WAERS'.
+      IF P_VAL = ABAP_TRUE.
+        CS-COL_POS = 18. CS-COLTEXT = TEXT-F76.
+      ELSE.
+        CS-NO_OUT = ABAP_TRUE.
+      ENDIF.
+  ENDCASE.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form FCAT_RULE_0300  — 화면 0300(GT_SIT_DISP) 컬럼 규칙
+*&---------------------------------------------------------------------*
+FORM FCAT_RULE_0300 CHANGING CS TYPE LVC_S_FCAT.
+  CASE CS-FIELDNAME.
+    WHEN 'EBELN' OR 'EBELP'. CS-KEY = ABAP_TRUE.
+    WHEN 'MENGE' OR 'WEMNG' OR 'NETWR'. CS-DO_SUM = ABAP_TRUE.
+    WHEN 'SITQTY'.   " In Transit(QTY)
+      CS-SCRTEXT_L = CS-REPTEXT = TEXT-N04.
+      CS-SCRTEXT_S = CS-SCRTEXT_M = CS-SCRTEXT_L.
+      CS-EMPHASIZE = 'C710'. CS-DO_SUM = ABAP_TRUE.
+    WHEN 'SITAMT'.   " In Transit(AMT)
+      CS-SCRTEXT_L = CS-REPTEXT = TEXT-N05.
+      CS-SCRTEXT_S = CS-SCRTEXT_M = CS-SCRTEXT_L.
+      CS-EMPHASIZE = 'C710'. CS-DO_SUM = ABAP_TRUE.
+  ENDCASE.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form FCAT_RULE_0500  — 화면 0500(GT_DISP_0500) 컬럼 규칙
+*&---------------------------------------------------------------------*
+FORM FCAT_RULE_0500 CHANGING CS TYPE LVC_S_FCAT.
+  " 숨김 컬럼
+  CASE CS-FIELDNAME.
+    WHEN 'BUKRS' OR 'KUNNR' OR 'KUNNR_TX' OR 'ZGROUP' OR 'GRUND' OR 'VGART'
+      OR 'BELNR' OR 'GJAHR' OR 'BUZEI' OR 'ZIV_CHK' OR 'ZSP_CHK'
+      OR 'CELLTAB' OR 'COLINFO' OR 'INFO' OR 'MTART' OR 'SALK3'
+      OR 'LBKUM' OR 'STPRS' OR 'LABST'.
+      CS-NO_OUT = ABAP_TRUE. RETURN.
+  ENDCASE.
+  " 표시 컬럼
+  CASE CS-FIELDNAME.
+    WHEN 'MJAHR'.    CS-COL_POS = 0.  CS-COLTEXT = TEXT-F64. CS-JUST = 'C'.
+    WHEN 'BUDAT'.    CS-COL_POS = 1.  CS-COLTEXT = TEXT-F65.
+    WHEN 'MBLNR'.    CS-COL_POS = 2.  CS-COLTEXT = TEXT-F66.
+    WHEN 'ZEILE'.    CS-COL_POS = 3.  CS-COLTEXT = TEXT-F77.
+    WHEN 'ZZLOGINO'. CS-COL_POS = 4.  CS-COLTEXT = TEXT-F78.
+    WHEN 'WERKS'.    CS-COL_POS = 5.  CS-COLTEXT = TEXT-F58.
+    WHEN 'LGORT'.    CS-COL_POS = 6.  CS-COLTEXT = TEXT-F67.
+    WHEN 'LIFNR'.    CS-COL_POS = 7.  CS-COLTEXT = TEXT-F59.
+    WHEN 'LIFNR_TX'. CS-COL_POS = 8.  CS-COLTEXT = TEXT-F60.
+    WHEN 'MATNR'.    CS-COL_POS = 9.  CS-COLTEXT = TEXT-F51.
+    WHEN 'MAKTX'.    CS-COL_POS = 10. CS-COLTEXT = TEXT-F52.
+    WHEN 'CHARG'.    CS-COL_POS = 11. CS-COLTEXT = TEXT-F68.
+    WHEN 'MENGE'.    CS-COL_POS = 12. CS-COLTEXT = TEXT-F69. CS-DO_SUM = ABAP_TRUE.
+    WHEN 'BWART'.    CS-COL_POS = 14. CS-COLTEXT = TEXT-F71.
+    WHEN 'BTEXT'.    CS-COL_POS = 15. CS-COLTEXT = TEXT-F72.
+    WHEN 'SOBKZ'.    CS-COL_POS = 16. CS-COLTEXT = TEXT-F73. CS-JUST = 'C'.
+    WHEN 'SHKZG'.    CS-COL_POS = 17. CS-COLTEXT = TEXT-F74. CS-JUST = 'C'.
+    WHEN 'MEINS'.    CS-COLTEXT = TEXT-F75. CS-COL_POS = COND #( WHEN P_VAL = ABAP_TRUE THEN 18 ELSE 19 ).
+    WHEN 'DMBTR'.    " 금액: P_VAL 체크 시만
+      IF P_VAL = ABAP_TRUE.
+        CS-COL_POS = 13. CS-COLTEXT = TEXT-F70. CS-DO_SUM = ABAP_TRUE. CS-CFIELDNAME = 'WAERS'.
+      ELSE.
+        CS-NO_OUT = ABAP_TRUE.
+      ENDIF.
+    WHEN 'WAERS'.
+      IF P_VAL = ABAP_TRUE.
+        CS-COL_POS = 19. CS-COLTEXT = TEXT-F76.
+      ELSE.
+        CS-NO_OUT = ABAP_TRUE.
+      ENDIF.
+  ENDCASE.
 ENDFORM.
 
 *&---------------------------------------------------------------------*
