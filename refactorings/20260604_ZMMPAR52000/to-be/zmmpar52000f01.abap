@@ -42,7 +42,6 @@ FORM INITIALIZE .
   APPEND S_BUDAT.
 
 ** Group code
-*  PERFORM GET_GROUP_ZMMT0010.
 
 ENDFORM.
 
@@ -112,25 +111,8 @@ FORM CREATE_DYNAMIC_TABLE .
   CASE C_X.
     WHEN P_VAL. " Amount 출력
 
-**     FIELD DELETE
 *      " 0100 Screen Fieldcatalog 구성
-*      DELETE GT_ALV_FIELDCAT_100 WHERE FIELDNAME EQ 'SQR'
-*                                    OR FIELDNAME EQ 'BUDAT'
-**                                    OR FIELDNAME EQ 'LGORT'
-*                                    OR FIELDNAME EQ 'CHARG'
-*                                    OR FIELDNAME EQ 'SOBKZ'
-*                                    OR FIELDNAME EQ 'PARTNER'
-*                                    OR FIELDNAME EQ 'NAME_ORG1'
-*                                    OR FIELDNAME EQ 'MAGRV'
-**                                    OR FIELDNAME EQ 'WAERS'
 **                                    OR FIELDNAME+0(5) EQ 'DMBTR' " 금액 삭제 요청으로 인한 주석
-*                                    OR FIELDNAME EQ 'DMBTR_SG_EI'
-*                                    OR FIELDNAME EQ 'MENGE_SG_EI'
-*                                    OR FIELDNAME EQ 'INFO'
-*                                    OR FIELDNAME EQ 'MARK'
-*                                    OR FIELDNAME+0(5) EQ 'DMAVG'
-*                                    OR FIELDNAME EQ 'CLABS'.
-*      SORT GT_ALV_FIELDCAT_100 BY COL_POS.
 
       " 0400 Screen Fieldcatalog 구성
       DELETE GT_ALV_FIELDCAT_400 WHERE FIELDNAME EQ 'SQR'
@@ -139,9 +121,6 @@ FORM CREATE_DYNAMIC_TABLE .
                                     OR FIELDNAME EQ 'PARTNER'
                                     OR FIELDNAME EQ 'NAME_ORG1'
                                     OR FIELDNAME EQ 'SLLAB'
-
-*                                    OR FIELDNAME EQ 'LGORT'
-*                                    OR FIELDNAME EQ 'WAERS'
 
                                     OR FIELDNAME EQ 'SPART'
                                     OR FIELDNAME EQ 'SPART_TX'
@@ -159,26 +138,8 @@ FORM CREATE_DYNAMIC_TABLE .
 
     WHEN OTHERS.      " Amount 미출력
 
-**     FIELD DELETE
 *      " 0100 Screen Fieldcatalog 구성
-*      DELETE GT_ALV_FIELDCAT_100 WHERE FIELDNAME EQ 'SQR'
-*                                    OR FIELDNAME EQ 'BUDAT'
-**                                    OR FIELDNAME EQ 'LGORT'
-*                                    OR FIELDNAME EQ 'CHARG'
-*                                    OR FIELDNAME EQ 'SOBKZ'
-*                                    OR FIELDNAME EQ 'PARTNER'
-*                                    OR FIELDNAME EQ 'NAME_ORG1'
-*                                    OR FIELDNAME EQ 'MAGRV'
-*                                    OR FIELDNAME EQ 'STPRS'
-*                                    OR FIELDNAME EQ 'WAERS'
 *                                    OR FIELDNAME+0(5) EQ 'DMBTR' " 금액 삭제
-*                                    OR FIELDNAME EQ 'DMBTR_SG_EI'
-*                                    OR FIELDNAME EQ 'MENGE_SG_EI'
-*                                    OR FIELDNAME EQ 'INFO'
-*                                    OR FIELDNAME EQ 'MARK'
-*                                    OR FIELDNAME+0(5) EQ 'DMAVG'
-*                                    OR FIELDNAME EQ 'CLABS'.
-*      SORT GT_ALV_FIELDCAT_100 BY COL_POS.
 
       " 0400 Screen Fieldcatalog 구성
       DELETE GT_ALV_FIELDCAT_400 WHERE FIELDNAME EQ 'SQR'
@@ -188,11 +149,7 @@ FORM CREATE_DYNAMIC_TABLE .
                                     OR FIELDNAME EQ 'NAME_ORG1'
                                     OR FIELDNAME EQ 'SLLAB'
 
-*                                    OR FIELDNAME EQ 'LGORT'
-
                                     OR FIELDNAME EQ 'STPRS'
-
-*                                    OR FIELDNAME EQ 'WAERS'
 
                                     OR FIELDNAME EQ 'SPART'
                                     OR FIELDNAME EQ 'SPART_TX'
@@ -266,13 +223,6 @@ FORM SCREEN_OUTPUT .
         SCREEN-REQUIRED = 2.
     ENDCASE.
 
-*    CASE C_X.
-*      WHEN RA_R1.
-*        IF SCREEN-GROUP1 EQ 'CHG'.
-*          SCREEN-ACTIVE = 0.
-*        ENDIF.
-*      WHEN RA_R2.
-
     IF SCREEN-NAME EQ 'S_WERKS-LOW' OR SCREEN-NAME EQ 'P_SPMON'.
       SCREEN-REQUIRED = 2.
     ENDIF.
@@ -294,8 +244,6 @@ FORM SCREEN_OUTPUT .
         SCREEN-INPUT = 0.
       ENDIF.
     ENDIF.
-
-*    ENDCASE.
 
     MODIFY SCREEN.
   ENDLOOP.
@@ -428,12 +376,6 @@ FORM ADD_FIELD  USING    PS_TABLE
   ASSIGN COMPONENT PV_VALUE OF STRUCTURE PS_TABLE TO <FS_FIELD>.
   IF SY-SUBRC EQ 0.
     <FS_FIELD_SUM> = <FS_FIELD_SUM> + <FS_FIELD>.
-
-*    IF PV_VALUE+6(2) EQ 'GI'.
-*      <FS_FIELD_SUM> = <FS_FIELD_SUM> - <FS_FIELD>.
-*    ELSE.
-*      <FS_FIELD_SUM> = <FS_FIELD_SUM> + <FS_FIELD>.
-*    ENDIF.
 
   ENDIF.
 
@@ -601,8 +543,6 @@ FORM SHOW_GROUP_RAW  USING    PV_FIELDNAME
                                 AND LIFNR EQ GS_DISP_SCR-LIFNR
                                 AND ZGROUP EQ LS_ZMMT0010-ZGROUP.
 
-*          IF GT_RAW-VGART IS INITIAL. "DMBTR EQ '0'.  "Amount Value check
-
           MOVE-CORRESPONDING GT_BATCH_0400 TO GT_RAW_DISP.
 
           " Mvt Text 출력요청으로 인한 추가 / " 24.08.20
@@ -611,8 +551,6 @@ FORM SHOW_GROUP_RAW  USING    PV_FIELDNAME
                  FROM T156T
                  WHERE BWART EQ GT_RAW_DISP-BWART
                    AND SPRAS EQ SY-LANGU.
-
-*                   AND SOBKZ EQ 'O'.
 
           APPEND GT_RAW_DISP. CLEAR GT_RAW_DISP.
         ENDLOOP.
@@ -684,18 +622,7 @@ FORM GET_GROUP_ZMMT0010 .
 * ETC. 이동유형 없기에 주석처리..
 * 추후 운영 시, ETC 추가될 시 적용 예정
 **********************************************************************
-*  LOOP AT GT_ZMMT0010 INTO DATA(LS_ZMMT0010).
-*    TRANSLATE LS_ZMMT0010-ZTEXT TO UPPER CASE.
 *    FIND 'ETC' IN LS_ZMMT0010-ZTEXT.
-*    IF SY-SUBRC EQ 0.
-*      CASE LS_ZMMT0010-ZGROUP+0(2).
-*        WHEN 'GR'.
-*          GV_GR_ETC = LS_ZMMT0010-ZGROUP.
-*        WHEN 'GI'.
-*          GV_GI_ETC = LS_ZMMT0010-ZGROUP.
-*      ENDCASE.
-*    ENDIF.
-*  ENDLOOP.
 
   "============================================================
   " 2) 이동유형 그룹 상세 조회 — 그룹 마스터(A) INNER JOIN 상세(B)
@@ -732,8 +659,6 @@ FORM SHOW_BATCH_DATA.
 * 2) SUM
 
   PERFORM CACULATE_TOTAL_BATCH.
-
-* 3) DELETE DUMMY VALUE
 
   PERFORM DELETE_DUMMY_BATCH.
 
@@ -805,27 +730,15 @@ FORM PERIOD_SETTING .
          LV_BACKMONTHS TYPE NUMC3.
 
 * Period Setting
-*  CONCATENATE P_LFGJA P_LFMON '01' INTO GV_SDATE. "begin
 *  CALL FUNCTION 'LAST_DAY_OF_MONTHS'
 *    EXPORTING
-*      DAY_IN            = GV_SDATE
 *    IMPORTING
-*      LAST_DAY_OF_MONTH = GV_EDATE
 *    EXCEPTIONS
-*      DAY_IN_NO_DATE    = 1
-*      OTHERS            = 2.
-*
-*  GV_EDATE_PO = GV_EDATE.
 *
 *  "Last 2 month before (PO 수량 계산용)
-*  CONCATENATE GV_EDATE_PO+0(6) '01' INTO LV_DATE.
-*  LV_BACKMONTHS = '2'.
 *  CALL FUNCTION 'CCM_GO_BACK_MONTHS'
 *    EXPORTING
-*      CURRDATE   = LV_DATE
-*      BACKMONTHS = LV_BACKMONTHS
 *    IMPORTING
-*      NEWDATE    = GV_SDATE_PO.
 
 ENDFORM.
 
@@ -859,8 +772,6 @@ FORM REPACKING_REASON_FOR_MOVEMENT  TABLES   PT_RAW STRUCTURE GT_RAW.
       AND A~MJAHR EQ @LT_RAW_REP-MJAHR
       AND A~ZEILE EQ @LT_RAW_REP-ZEILE.
 
-*      AND b~bsart EQ 'ZRPK'. "Repacking
-
     "BSART EQ 'ZRPK'
     SORT PT_RAW BY MBLNR MJAHR ZEILE.
     LOOP AT LT_REP INTO DATA(LS_REP).
@@ -888,38 +799,17 @@ ENDFORM.
 **&---------------------------------------------------------------------*
 *FORM F4_H_MTART  USING    PI_MTART.
 *
-*  DATA : BEGIN OF LT_MTART OCCURS 0,
-*           SPRAS LIKE T134T-SPRAS,
-*           MTART LIKE T134T-MTART,
-*           MTBEZ LIKE T134T-MTBEZ,
 *         END OF LT_MTART.
 *
-*  DATA: LT_RETURN LIKE TABLE OF DDSHRETVAL WITH HEADER LINE.
-*
-*  SELECT SPRAS,
-*         MTART,
 *         MTBEZ
 *    INTO TABLE @LT_MTART
-*    FROM T134T
-*   WHERE SPRAS  = @SY-LANGU
 *     AND MTART IN ('HAWA', 'ROH', 'VERP', 'ERSA', 'ZCSD')
 *   ORDER BY MTART.
 *
 *  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
 *    EXPORTING
-*      RETFIELD        = 'MTART'
-*      VALUE_ORG       = 'S'
 *    TABLES
-*      VALUE_TAB       = LT_MTART
-*      RETURN_TAB      = LT_RETURN
 *    EXCEPTIONS
-*      PARAMETER_ERROR = 1
-*      NO_VALUES_FOUND = 2
-*      OTHERS          = 3.
-*  IF SY-SUBRC = 0.
-*    READ TABLE LT_RETURN INDEX 1.
-*    PI_MTART = LT_RETURN-FIELDVAL.
-*  ENDIF.
 *
 *ENDFORM.
 *&---------------------------------------------------------------------*
@@ -931,57 +821,22 @@ ENDFORM.
 *&---------------------------------------------------------------------*
 *FORM F4_H_LIFNR  USING   PI_LIFNR.
 *
-*  DATA : BEGIN OF LT_LIFNR OCCURS 0,
-**          WERKS      LIKE MDLL-WERKS,
-*           PARTNER   LIKE BUT000-PARTNER,
-*           NAME_ORG1 LIKE BUT000-NAME_ORG1,
 *         END OF LT_LIFNR.
 *
-**  DATA : BEGIN OF LT_CHECK OCCURS 0,
-**          WERKS      LIKE MDLL-WERKS,
-**          LBEAR      LIKE MDLL-LBEAR,
 **         END OF LT_CHECK.
 *
-*  DATA: LT_RETURN TYPE DDSHRETVAL OCCURS 0.
-*
-*
-*  SELECT FROM BUT000 AS A
-*   INNER JOIN MDLL   AS B
-*           ON B~LBEAR EQ A~PARTNER
 *       FIELDS PARTNER, NAME_ORG1
-*        WHERE A~PARTNER IN @S_LIFNR
-*          AND A~TYPE EQ '2'
-**          AND A~NAMCOUNTRY EQ @SY-LANGU
 *         INTO CORRESPONDING FIELDS OF TABLE @LT_LIFNR.
-*
-*  SORT LT_LIFNR BY PARTNER.
 *
 *  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
 *    EXPORTING
-*      RETFIELD        = 'PARTNER'
-*      DYNPPROG        = SY-REPID
-*      DYNPNR          = SY-DYNNR
-*      DYNPROFIELD     = 'S_LIFNR-LOW'
-*      WINDOW_TITLE    = 'OEM Vendor'
-*      VALUE_ORG       = 'S'
 *    TABLES
-*      VALUE_TAB       = LT_LIFNR
-*      RETURN_TAB      = LT_RETURN[]
 *    EXCEPTIONS
-*      PARAMETER_ERROR = 1
-*      NO_VALUES_FOUND = 2
-*      OTHERS          = 3.
 *
 ** FIELD 값 확인을 위한 강제 ENTER
 *  CALL FUNCTION 'SAPGUI_SET_FUNCTIONCODE'
 *    EXPORTING
-*      FUNCTIONCODE           = 'ENTE'
 *    EXCEPTIONS
-*      FUNCTION_NOT_SUPPORTED = 1
-*      OTHERS                 = 2.
-*
-*
-*
 *
 *ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1013,8 +868,6 @@ FORM CACULATE_TOTAL_BATCH .
                  <FS_MEINS>    TYPE ANY.
 
   CHECK <GT_BATCH>[] IS NOT INITIAL.
-
-* Material Unit/Desc. READ
 
   CREATE DATA LDREF_TABLE LIKE <GT_BATCH>.
   ASSIGN LDREF_TABLE->* TO <LT_BATCH>.
@@ -1131,8 +984,6 @@ FORM CACULATE_TOTAL_BATCH .
            A~BWTAR AS CHARG,
            D~CLABS AS SUM_MCHB,
 
-*         SUM( A~STOCK_POSTING ) AS PRD_AMT,
-
       CASE A~XRUEB WHEN 'X' THEN CASE B~VGART WHEN 'KP' THEN SUM( A~STOCK_POSTING )
                                               ELSE SUM( A~STOCK_POSTING_PP ) END
                    ELSE SUM( A~STOCK_POSTING ) END AS PRD_AMT
@@ -1231,8 +1082,6 @@ FORM DELETE_DUMMY_BATCH .
                  <FS_MENGE_GI3> TYPE ANY,
                  <FS_MENGE_GI4> TYPE ANY,
 
-*                 <FS_MENGE_GI5> TYPE ANY,
-
                  <FS_MENGE_GR1> TYPE ANY,
                  <FS_MENGE_GR2> TYPE ANY,
                  <FS_MENGE_GR3> TYPE ANY,
@@ -1255,8 +1104,6 @@ FORM DELETE_DUMMY_BATCH .
                       'MENGE_GI2' OF STRUCTURE <LS_DISP> TO <FS_MENGE_GI2>,
                       'MENGE_GI3' OF STRUCTURE <LS_DISP> TO <FS_MENGE_GI3>,
                       'MENGE_GI4' OF STRUCTURE <LS_DISP> TO <FS_MENGE_GI4>,
-
-*                      'MENGE_GI5' OF STRUCTURE <LS_DISP> TO <FS_MENGE_GI5>,
 
                       'MENGE_GR1' OF STRUCTURE <LS_DISP> TO <FS_MENGE_GR1>,
                       'MENGE_GR2' OF STRUCTURE <LS_DISP> TO <FS_MENGE_GR2>,
@@ -1344,9 +1191,6 @@ FORM MATERIAL_DOC_BASIC_STOCK .
   DATA: LT_TABLE TYPE REF TO DATA,
         LS_TABLE TYPE REF TO DATA.
 
-*  CHECK GT_DISP_SCR[] IS NOT INITIAL.
-*  SORT GT_DISP_SCR BY MATNR WERKS LGORT CHARG.
-
 * Create 0400 SCREEN
 
   CALL METHOD CL_ALV_TABLE_CREATE=>CREATE_DYNAMIC_TABLE
@@ -1376,10 +1220,6 @@ FORM MATERIAL_DOC_BASIC_STOCK .
          A~MATNR,                     " 자재번호
          B~MAKTX,                     " 자재내역(명)
 
-*         A~SOBKZ,
-*         A~LIFNR,
-*         C~NAME_ORG1 AS LIFNR_TX,
-
          A~LGORT,                     " 저장위치
          H~LGOBE,                     " 저장위치명
          A~CHARG,                     " 배치(Batch)
@@ -1393,9 +1233,6 @@ FORM MATERIAL_DOC_BASIC_STOCK .
         LEFT OUTER JOIN MAKT AS B
           ON B~MATNR EQ A~MATNR
          AND B~SPRAS EQ @SY-LANGU
-
-*        LEFT OUTER JOIN BUT000 AS C
-*          ON C~PARTNER EQ A~LIFNR
 
         JOIN T001K AS D
           ON D~BWKEY EQ A~WERKS
@@ -1417,14 +1254,10 @@ FORM MATERIAL_DOC_BASIC_STOCK .
           AND A~WERKS IN @S_WERKS
           AND A~LGORT IN @S_LGORT
 
-*          AND A~LIFNR IN @S_LIFNR
-*          AND F~MTART IN @S_MTART
-
           AND A~CHARG IN @GR_CHARG
           AND D~BUKRS IN @S_BUKRS
 
 *          AND A~CLABS NE 0 "2026.04.28 주석
-*          AND A~SOBKZ EQ 'O'
 
      GROUP BY E~BUKRS, A~WERKS, A~MATNR, B~MAKTX, A~LGORT, H~LGOBE, A~CHARG, E~WAERS, G~VERPR.
 
@@ -1440,14 +1273,9 @@ FORM MATERIAL_DOC_BASIC_STOCK .
            B~MAKTX,                   " 자재내역(명)
            A~CHARG,                   " 배치(Batch)
 
-*         A~SOBKZ,
-
            A~LIFNR,                   " 공급처(Vendor)
            C~NAME_ORG1 AS LIFNR_TX,   " 공급처명
            G~VERPR,                   " 이동평균가
-
-*         ' ' AS LGORT,
-*         ' ' AS LGOBE,
 
            SUM( A~LBLAB ) AS CLABS
      APPENDING CORRESPONDING FIELDS OF TABLE @LT_RAW_0400
@@ -1470,11 +1298,7 @@ FORM MATERIAL_DOC_BASIC_STOCK .
           WHERE A~MATNR IN @S_MATNR
             AND A~WERKS IN @S_WERKS
 
-*            AND A~LIFNR IN @S_LIFNR
-
             AND A~CHARG IN @S_CHARG
-
-*            AND F~MTART IN @S_MTART
 
             AND D~BUKRS IN @S_BUKRS
             AND A~SOBKZ EQ 'O'
@@ -1483,46 +1307,9 @@ FORM MATERIAL_DOC_BASIC_STOCK .
 
 *--------------------------------------------------------------------*
 
-*  IF LT_RAW_0400[] IS NOT INITIAL.
-
   SORT LT_RAW_0400 BY BUKRS WERKS MATNR LIFNR CHARG.
 
-*    LOOP AT LT_MCHB INTO DATA(LS_MCHB).
-*      READ TABLE LT_RAW_0400 INTO LS_RAW_0400 WITH KEY BUKRS = LS_MCHB-BUKRS
-*                                                       WERKS = LS_MCHB-WERKS
-*                                                       MATNR = LS_MCHB-MATNR
-*                                                       LIFNR = LS_MCHB-LIFNR
-*                                                       CHARG = LS_MCHB-CHARG
-*                                                       BINARY SEARCH.
 *
-**   사급자재 Stock 존재하는 경우 -> LT_RAW_0400에 modify
-*      IF SY-SUBRC EQ 0.
-*        LV_INDEX = SY-TABIX.
-*        LS_RAW_0400-CLABS  = LS_MCHB-CLABS.
-*        LS_RAW_0400-STPRS2 = LS_MCHB-STPRS2.
-*        MODIFY LT_RAW_0400 FROM LS_RAW_0400 INDEX LV_INDEX.
-*        CLEAR : LS_MCHB.
-*
-**   사급자재 Stock 존재하지 않는 경우 -> LT_RAW_0400에 add
-*      ELSE.
-*        CLEAR LS_RAW_0400.
-*        MOVE-CORRESPONDING LS_MCHB TO LS_RAW_0400.
-*        APPEND LS_RAW_0400 TO LT_RAW_0400.
-*        CLEAR: LS_MCHB.
-*      ENDIF.
-*
-*    ENDLOOP.
-
-*   ITAB에 값 존재하지 않는 경우  LT_RAW_0400에 Append
-*  ELSE.
-
-*    LOOP AT LT_MCHB ASSIGNING FIELD-SYMBOL(<FS_MCHB>).
-*      CLEAR: LT_RAW_0400[], LS_RAW_0400.
-*      MOVE-CORRESPONDING <FS_MCHB> TO LS_RAW_0400.
-*      APPEND LS_RAW_0400 TO LT_RAW_0400.
-*    ENDLOOP.
-
-*  ENDIF.
 
 *--------------------------------------------------------------------*
 * BATCH 기초수량
@@ -1556,8 +1343,6 @@ FORM MATERIAL_DOC_BASIC_STOCK .
          A~SALK3                      " 총평가액
          A~LBKUM                      " 총평가재고수량
 
-*         H~BEIKZ
-
          H~ZGROUP                     " 이동유형 그룹코드
     INTO CORRESPONDING FIELDS OF TABLE GT_BATCH_0400
                        FROM MATDOC AS A
@@ -1578,23 +1363,17 @@ FORM MATERIAL_DOC_BASIC_STOCK .
                          ON A~LGORT = I~LGORT
     WHERE A~RECORD_TYPE EQ 'MDOC'
 
-*        AND A~XAUTO EQ SPACE
-*        AND A~MJAHR EQ P_LFGJA
-
       AND A~BUDAT BETWEEN S_BUDAT-LOW AND S_BUDAT-HIGH
       AND A~MATNR IN S_MATNR
       AND A~WERKS IN S_WERKS "PLANT with Auth
       AND A~LGORT IN S_LGORT
 
 *      AND A~LIFNR_SID IN S_LIFNR " Vendor 추가 / 24.08.19
-*        AND A~LGORT IN S_LGORT
 
       AND A~CHARG IN GR_CHARG
       AND A~BUKRS IN S_BUKRS
       AND A~MATNR NE ''
       AND A~CHARG NE ''.
-
-*      AND A~SOBKZ EQ 'O'.
 
   SORT GT_BATCH_0400 BY BUDAT MBLNR ZEILE MATNR CHARG LGORT.
   DELETE ADJACENT DUPLICATES FROM GT_BATCH_0400 COMPARING BUDAT MBLNR ZEILE MATNR CHARG LGORT.
@@ -1619,8 +1398,6 @@ FORM MATERIAL_DOC_BASIC_STOCK .
                                       LGORT = LS_RAW_0400-LGORT
                                       CHARG = LS_RAW_0400-CHARG
                                       LIFNR = LS_RAW_0400-LIFNR
-
-*                                      SOBKZ = LS_RAW_0400-SOBKZ
 
                              BINARY SEARCH.
 
@@ -2079,8 +1856,6 @@ FORM SHOW_GROUP_RAW2  USING    PV_FIELDNAME
                                 AND LIFNR EQ GS_DISP_SCR-LIFNR
                                 AND ZGROUP EQ LS_ZMMT0010-ZGROUP.
 
-*          IF GT_RAW-VGART IS INITIAL. "DMBTR EQ '0'.  "Amount Value check
-
           MOVE-CORRESPONDING GT_BATCH_0400 TO GT_RAW_DISP.
 
           " Mvt Text 출력요청으로 인한 추가 / " 24.08.20
@@ -2089,8 +1864,6 @@ FORM SHOW_GROUP_RAW2  USING    PV_FIELDNAME
                  FROM T156T
                  WHERE BWART EQ GT_RAW_DISP-BWART
                    AND SPRAS EQ SY-LANGU.
-
-*                   AND SOBKZ EQ 'O'.
 
           APPEND GT_RAW_DISP. CLEAR GT_RAW_DISP.
         ENDLOOP.
@@ -2236,13 +2009,9 @@ FORM CO_AMT .
   " 이후 binary search용 정렬
   SORT LT_CO BY MATNR BWKEY BWTAR.
 
-*  SELECT JAHRPER, MATNR, BWKEY, BWTAR, PRICE
-*    FROM ZCOPAV40011_CDS
-*   WHERE JAHRPER EQ @LV_JAHRPER
 *     AND MATNR   IN @S_MATNR
 *     AND BWKEY   IN @S_WERKS
 *     AND BWTAR   IN @S_CHARG
-*    INTO TABLE @DATA(LT_CO).
 
   LOOP AT <GT_BATCH> ASSIGNING <GS_BATCH>.
     ASSIGN COMPONENT: 'WERKS' OF STRUCTURE <GS_BATCH> TO <FS_WERKS>,

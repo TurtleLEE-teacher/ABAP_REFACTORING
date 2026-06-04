@@ -197,7 +197,10 @@ ENDFORM.
 - [x] C1 파일럿 (`GET_GROUP_ZMMT0010`)
 - [x] C1 배치 1 — `to-be/zmmpar52000f01.abap` 생성 (파일럿 + LT_SUM2 SORT)
 - [x] C1 배치 2 — `MATERIAL_DOC_BASIC_STOCK` 7 SELECT **컬럼 한글주석 67개** + 집계 CTE 설명 (alias 현행 유지 확정)
+- [x] **M(정리) — F01 죽은 주석코드 231줄 제거** (주석처리된 PERFORM/DELETE/FIELDCAT 블록 등) → [`CLEANUP_LOG_f01.md`](./CLEANUP_LOG_f01.md)
 - [ ] C1 배치 3 (선택) — 잔여 소형 SELECT(`CHECK_INPUT`/`SHOW_GROUP_RAW`/`CO_AMT` 등) 주석
 - [ ] C4 (스타일 표준화) → ⏸️ 게이트 → C3 (구조체 통합) → C2 (5벌 DRY)
 
 > **alias 정책 확정(2026-06-04)**: 다중 JOIN SQL은 **컬럼 한글주석만 적용, alias 현행 유지**(재정렬 미적용 — 변경폭/검증부담 회피, 의미보존 우선).
+>
+> **죽은 코드 정리 정책(2026-06-04)**: 주석처리된 *코드*는 제거(가독성/유지보수). 단 **보존**: ① 한국어 업무주석 ② 날짜 표기 변경이력(예: `"2026.04.28 주석`, `/ 24.08.19`) ③ `추후/예정/TODO` 의도주석 ④ 섹션 구분자. 제거분은 `as-is/`·git에 보존되어 100% 복구 가능, 제거 전량은 `CLEANUP_LOG_f01.md`에 기록.
