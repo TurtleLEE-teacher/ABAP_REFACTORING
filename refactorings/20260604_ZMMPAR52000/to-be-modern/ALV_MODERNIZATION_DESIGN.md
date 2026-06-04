@@ -46,13 +46,15 @@
 |---|---|---|
 | `zmmpar52000c01.abap` | 단일 `LCL_EVENT_RECEIVER`(SY-DYNNR 분기) | ✅ 완료 |
 | `zmmpar52000top.abap` | 데이터 구조 유지 + ALV 인프라 2벌(MAIN/POP) 선언 | ✅ 완료 |
-| `zmmpar52000f02.abap` | 모던 ALV 셋업: `ALV_DISPLAY_MAIN/POP`·`CREATE_INSTANCE_*`·`BUILD_FIELDCAT`(RTTI)·`CREATE_EVENT_RECEIVER`·`FREE_POPUP_CONTROLS`/`EXIT_RTN` | ✅ 골격(SE38 완성 필요) |
+| `zmmpar52000f02.abap` | 모던 ALV 셋업 + **핸들러/비즈니스 FORM 합본**(컴파일 가능 초안). 4086→1422줄 | ✅ 합본 완료 |
 | `zmmpar52000o01.abap` | 슬림 PBO: `STATUS_0100` + 단일 `CREATE_ALV` | ✅ 완료 |
 | `zmmpar52000i01.abap` | 슬림 PAI: `EXIT_COMMAND` + 단일 `USER_COMMAND` | ✅ 완료 |
 
 > F01(비즈니스 로직)·SCR(셀렉션)은 모던화 대상 아님 — 기존 [`../to-be/`](../to-be/) 버전 재사용.
 >
-> **SE38 잔여 완성 작업**: ① `BUILD_FIELDCAT` 화면별 컬럼 규칙을 구 `BUILD_CATEGORY_200/300/500`에서 이관 ② 핸들러/비즈니스 FORM(`HANDLE_DOUBLE_CLICK_*` 등)을 `to-be/f02`에서 이관 ③ Screen Painter/PF-STATUS/텍스트기호 반영(아래 §4) ④ 화면 Flow Logic을 단일 모듈명(`CREATE_ALV`/`USER_COMMAND`)으로 통일.
+> **합본 완료(2026-06-04)**: 핸들러/비즈니스 FORM(`HANDLE_DOUBLE_CLICK_100~500`, `HANDLE_USER_COMMAND_100/400`, `HANDLER_TOOLBAR(_0400)`, `TOP_OF_PAGE`, `ADD_TEXT`, `ALV_CLASS_REFRESH`, `BUFFER_CLEAR_PROC`)을 `to-be/f02`에서 이관(로직 무변경). 구 변수 재매핑(`GV_ALV_DOCUMENT→GCL_ALV_DOCUMENT`, `GV_ALV_GRID_100/400→GCL_GRID_MAIN`). `HTML_DISPLAY`는 모던판(화면별 컨테이너+`GCL_HTML_VIEWER` CLEAR)으로 교체. **모든 PERFORM 대상 해석 확인, FORM/ENDFORM 25/25.**
+>
+> **SE38 잔여(선택/필수)**: ① (선택) `BUILD_FIELDCAT` 화면별 컬럼 규칙을 구 `BUILD_CATEGORY_200/300/500`에서 이관 — 미적용 시 RTTI 기본(DDIC 텍스트)으로 표시됨 ② (필수) Screen Painter/PF-STATUS/텍스트기호 반영(§4) ③ (필수) 화면 Flow Logic을 단일 모듈명(`CREATE_ALV`/`USER_COMMAND`)으로 통일 ④ (필수) 활성화·5화면 테스트.
 
 ---
 

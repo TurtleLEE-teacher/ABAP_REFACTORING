@@ -25,13 +25,6 @@ DEFINE _LMC_SET_TEXT.
   <LS_FCAT>-SCRTEXT_L = <LS_FCAT>-COLTEXT  = <LS_FCAT>-REPTEXT = &1.
 END-OF-DEFINITION.
 
-*&---------------------------------------------------------------------*
-*& Form OUTTAB_ASSIGN  — 화면별 출력 인터널테이블을 FS에 바인딩
-*&---------------------------------------------------------------------*
-FORM OUTTAB_ASSIGN USING    PV_DYNNR TYPE SY-DYNNR
-                   CHANGING CT_FS    TYPE ANY TABLE.       "참조용(미사용 시 FS 직접)
-" 실제 사용은 ASSIGN으로 글로벌 itab을 FS에 연결 (호출부 참조)
-ENDFORM.
 
 *&---------------------------------------------------------------------*
 *& Form ALV_DISPLAY_MAIN  — 풀스크린(0100 메인 / 0400 배치) 표시
@@ -55,7 +48,6 @@ FORM ALV_DISPLAY_MAIN USING PV_DYNNR TYPE SY-DYNNR.
   PERFORM BUILD_LAYOUT   CHANGING GS_LAYOUT_MAIN.
   PERFORM BUILD_FIELDCAT USING PV_DYNNR <FT_OUT> CHANGING GT_FCAT_MAIN.
   PERFORM BUILD_SORT_MAIN.
-  PERFORM EXCLUDE_FUNCTIONKEY USING 'GT_ALV_EXTAB_100' CHANGING GT_EXCLUDE_MAIN.
 
   " 4) 이벤트 등록 + Display
   PERFORM CREATE_EVENT_RECEIVER USING GCL_GRID_MAIN.
@@ -97,7 +89,6 @@ FORM ALV_DISPLAY_POP USING PV_DYNNR TYPE SY-DYNNR.
   PERFORM BUILD_LAYOUT   CHANGING GS_LAYOUT_POP.
   PERFORM BUILD_FIELDCAT USING PV_DYNNR <FT_OUT> CHANGING GT_FCAT_POP.
   PERFORM BUILD_SORT_POP.
-  PERFORM EXCLUDE_FUNCTIONKEY USING 'GT_ALV_EXTAB_200' CHANGING GT_EXCLUDE_POP.
 
   PERFORM CREATE_EVENT_RECEIVER USING GCL_GRID_POP.
 
@@ -261,14 +252,1171 @@ FORM EXIT_RTN.
   ENDCASE.
 ENDFORM.
 
+
+*&---------------------------------------------------------------------*
+*& Form HTML_DISPLAY  — TOP_OF_PAGE HTML 헤더 (모던, 화면별 컨테이너)
+*&   생명주기: HTML Viewer는 CLEAR만(FREE 금지) 후 매번 NEW (FS §5,§8)
+*&---------------------------------------------------------------------*
+FORM HTML_DISPLAY.
+  DATA LCL_TOP TYPE REF TO CL_GUI_CONTAINER.
+  CASE SY-DYNNR.
+    WHEN '0100' OR '0400'. LCL_TOP = GCL_TOP_CONT_MAIN.   " 풀스크린
+    WHEN OTHERS.           LCL_TOP = GCL_TOP_CONT_POP.    " 팝업
+  ENDCASE.
+  CHECK LCL_TOP IS BOUND.
+
+  CLEAR GCL_HTML_VIEWER.                      " ⚠️ FREE 금지, CLEAR만
+  GCL_HTML_VIEWER = NEW CL_GUI_HTML_VIEWER( PARENT = LCL_TOP ).
+
+  CALL FUNCTION 'REUSE_ALV_GRID_COMMENTARY_SET'
+    EXPORTING DOCUMENT = GCL_ALV_DOCUMENT
+              BOTTOM   = SPACE.
+  GCL_ALV_DOCUMENT->MERGE_DOCUMENT( ).
+  GCL_ALV_DOCUMENT->SET_DOCUMENT_BACKGROUND( PICTURE_ID = CONV SDYDO_KEY( SPACE ) ).
+  GCL_ALV_DOCUMENT->HTML_CONTROL = GCL_HTML_VIEWER.
+  GCL_ALV_DOCUMENT->DISPLAY_DOCUMENT(
+    EXPORTING REUSE_CONTROL = 'X' PARENT = LCL_TOP ).
+ENDFORM.
+
+
 *======================================================================
-* [이관 대상] 아래 FORM은 기존 to-be/zmmpar52000f02.abap 에서 로직 변경 없이 이관:
-*   - 핸들러: HANDLE_DOUBLE_CLICK_100/200/300/400/500,
-*             HANDLE_USER_COMMAND_100/400, HANDLER_TOOLBAR, HANDLER_TOOLBAR_0400
-*   - TOP_OF_PAGE, HTML_DISPLAY (단, HTML Viewer는 CLEAR만/FS §5,§8)
-*   - EXCLUDE_FUNCTIONKEY (CHANGING 시그니처로 정리 권장)
-*   - 비즈니스 UI: SHOW_GROUP_RAW, SHOW_BATCH_DATA 표시 보조 등
-* ※ 구 인프라 폼(CREATE_GRID_OBJECT_*/ALV_CLEAR_VARIABLE_*/BUILD_LAYOUT_*/
-*    BUILD_SORT_*/BUILD_COLOR_STYLE_*/BUILD_EVENT_*/DISPLAY_ALV_*/BUILD_CATEGORY_*)
-*    은 위 공통 폼으로 대체되어 제거됨.
+* [이관 FORM] 기존 to-be/zmmpar52000f02.abap 에서 로직 변경 없이 이관.
+*   구 변수 재매핑: GV_ALV_DOCUMENT→GCL_ALV_DOCUMENT,
+*                  GV_ALV_GRID_100/400→GCL_GRID_MAIN
+*   (팝업 핸들러 200/300/500은 그리드 객체 직접참조 없음)
 *======================================================================
+
+FORM ADD_TEXT  USING PV_TEXT TYPE SDYDO_TEXT_ELEMENT.
+
+  CALL METHOD GCL_ALV_DOCUMENT->ADD_TEXT
+    EXPORTING
+      TEXT          = PV_TEXT
+      SAP_FONTSTYLE = CL_DD_DOCUMENT=>SANS_SERIF
+      SAP_EMPHASIS  = CL_DD_DOCUMENT=>EMPHASIS.
+
+ENDFORM.
+
+FORM TOP_OF_PAGE  USING   PV_DYNDOC_ID TYPE REF TO CL_DD_DOCUMENT.
+
+  DATA : LV_TEXT(255) TYPE C,
+         LV_VTEXT     LIKE TVKOT-VTEXT.
+
+  DATA : LV_SDATE_TX(20),
+         LV_EDATE_TX(20).
+
+  CASE SY-DYNNR.
+    WHEN '0100'.  "Main data
+
+* Header
+
+      CLEAR : LV_TEXT.
+      LV_TEXT = TEXT-100. "[ Valuated Stock Report - Overview  ]
+      CALL METHOD GCL_ALV_DOCUMENT->ADD_TEXT
+        EXPORTING
+          TEXT         = LV_TEXT
+          SAP_FONTSIZE = CL_DD_DOCUMENT=>LARGE
+          SAP_EMPHASIS = CL_DD_AREA=>STRONG.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+* Period
+
+      CLEAR : LV_TEXT.
+      CONCATENATE S_BUDAT-LOW '~' S_BUDAT-HIGH INTO LV_TEXT.
+      CONCATENATE 'Period :' LV_TEXT INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+    WHEN '0200'.  "Group doc. data
+
+* Header
+
+      CLEAR : LV_TEXT.
+      CASE GS_DISP_SCR-DYNNR.
+        WHEN '0100'.
+          LV_TEXT = TEXT-110. "[ Valuated Stock Report - Detail ]
+        WHEN '0400'.
+          LV_TEXT = TEXT-410. "[ Storage Loc./Batch Stock Report - Detail ]
+      ENDCASE.
+      CALL METHOD GCL_ALV_DOCUMENT->ADD_TEXT
+        EXPORTING
+          TEXT         = LV_TEXT
+          SAP_FONTSIZE = CL_DD_DOCUMENT=>LARGE
+          SAP_EMPHASIS = CL_DD_AREA=>STRONG.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+      CLEAR : LV_TEXT.
+      CALL FUNCTION 'CONVERSION_EXIT_MATN1_OUTPUT'
+        EXPORTING
+          INPUT  = GS_DISP_SCR-MATNR
+        IMPORTING
+          OUTPUT = GS_DISP_SCR-MATNR.
+      CONCATENATE 'Material :' GS_DISP_SCR-MATNR '('GS_DISP_SCR-MAKTX')'
+                   INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+      SELECT SINGLE NAME1
+      INTO @DATA(LV_NAME1)
+      FROM T001W
+      WHERE WERKS EQ @GS_DISP_SCR-WERKS.
+
+      CLEAR : LV_TEXT.
+      CONCATENATE 'Plant :' GS_DISP_SCR-WERKS '('LV_NAME1')'
+                   INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+      CASE GS_DISP_SCR-DYNNR.
+        WHEN '0400'.
+
+          SELECT SINGLE LGOBE
+          INTO @DATA(LV_LGOBE)
+          FROM T001L
+          WHERE WERKS EQ @GS_DISP_SCR-WERKS
+            AND LGORT EQ @GS_DISP_SCR-LGORT.
+
+          CLEAR : LV_TEXT.
+          CONCATENATE 'Storage Location :' GS_DISP_SCR-LGORT '('LV_LGOBE')'
+                       INTO LV_TEXT SEPARATED BY SPACE.
+          PERFORM ADD_TEXT USING LV_TEXT.
+          CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+          CLEAR : LV_TEXT.
+          CONCATENATE 'Batch :' GS_DISP_SCR-CHARG
+                       INTO LV_TEXT SEPARATED BY SPACE.
+          PERFORM ADD_TEXT USING LV_TEXT.
+          CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+      ENDCASE.
+
+      CLEAR : LV_TEXT.
+      LV_TEXT = GV_TITLE_200.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+    WHEN '0300'.  "Sit data
+
+      CLEAR : LV_TEXT.
+      CALL FUNCTION 'CONVERSION_EXIT_MATN1_OUTPUT'
+        EXPORTING
+          INPUT  = GS_DISP_SCR-MATNR
+        IMPORTING
+          OUTPUT = GS_DISP_SCR-MATNR.
+      CONCATENATE 'Material :' GS_DISP_SCR-MATNR '('GS_DISP_SCR-MAKTX')'
+                   INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+      CLEAR : LV_TEXT.
+      CONCATENATE 'Plant :' GS_DISP_SCR-WERKS
+                   INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+* Period
+
+      WRITE GV_SDATE_PO TO LV_SDATE_TX.
+      CONDENSE LV_SDATE_TX NO-GAPS.
+      WRITE GV_EDATE_PO TO LV_EDATE_TX.
+      CONDENSE LV_EDATE_TX NO-GAPS.
+
+      CLEAR : LV_TEXT.
+      CONCATENATE 'Period :' LV_SDATE_TX '~' LV_EDATE_TX
+                   INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+    WHEN '0400'.  "Batch data
+
+* Header
+
+      CLEAR : LV_TEXT.
+      LV_TEXT = TEXT-400. "[ Storage Loc./Batch Stock Report - Overview ]
+      CALL METHOD GCL_ALV_DOCUMENT->ADD_TEXT
+        EXPORTING
+          TEXT         = LV_TEXT
+          SAP_FONTSIZE = CL_DD_DOCUMENT=>LARGE
+          SAP_EMPHASIS = CL_DD_AREA=>STRONG.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+* Period
+
+      CLEAR : LV_TEXT.
+      CONCATENATE S_BUDAT-LOW '~' S_BUDAT-HIGH INTO LV_TEXT.
+      CONCATENATE 'Period :' LV_TEXT INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+*      " Amount
+
+    WHEN '0500'.  "Sit data
+
+* Header
+
+      CLEAR : LV_TEXT.
+      LV_TEXT = TEXT-500. "[ detail view ]
+      CALL METHOD GCL_ALV_DOCUMENT->ADD_TEXT
+        EXPORTING
+          TEXT         = LV_TEXT
+          SAP_FONTSIZE = CL_DD_DOCUMENT=>LARGE
+          SAP_EMPHASIS = CL_DD_AREA=>STRONG.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+
+* Period
+
+      WRITE GV_SDATE_PO TO LV_SDATE_TX.
+      CONDENSE LV_SDATE_TX NO-GAPS.
+      WRITE GV_EDATE_PO TO LV_EDATE_TX.
+      CONDENSE LV_EDATE_TX NO-GAPS.
+
+      CLEAR : LV_TEXT.
+      CONCATENATE 'Period :' S_BUDAT-LOW '~' S_BUDAT-HIGH
+                   INTO LV_TEXT SEPARATED BY SPACE.
+      PERFORM ADD_TEXT USING LV_TEXT.
+      CALL METHOD GCL_ALV_DOCUMENT->NEW_LINE.
+  ENDCASE.
+
+  PERFORM HTML_DISPLAY .
+
+ENDFORM.
+
+FORM ALV_CLASS_REFRESH  USING P_GRID.
+
+  DATA L_GRID TYPE REF TO CL_GUI_ALV_GRID.
+  L_GRID = P_GRID.
+
+* Refresh
+
+  CLEAR GS_ALV_STABLE.
+  GS_ALV_STABLE-ROW = 'X'.
+  GS_ALV_STABLE-COL = 'X'.
+
+  CALL METHOD L_GRID->REFRESH_TABLE_DISPLAY
+    EXPORTING
+      IS_STABLE      = GS_ALV_STABLE
+      I_SOFT_REFRESH = ''.
+
+ENDFORM.
+
+FORM BUFFER_CLEAR_PROC  USING    PV_REPID
+                                 PV_ITNAM.
+  DATA: L_MEMORY_ID_CLEAR TYPE STRING,                      "Y7AK023435
+        L_MEMORY_ID_HASH  TYPE HASH160.
+
+  CONCATENATE PV_REPID PV_ITNAM INTO L_MEMORY_ID_CLEAR.
+
+  CALL FUNCTION 'CALCULATE_HASH_FOR_CHAR'
+    EXPORTING
+      DATA   = L_MEMORY_ID_CLEAR                            "RULE 이 Pgm명 + I/T 명
+    IMPORTING
+      HASH   = L_MEMORY_ID_HASH                             "버퍼 ID : 동적인 내용 이겠쥐~
+    EXCEPTIONS
+      OTHERS = 4.
+
+  IF SY-SUBRC = 0.
+    FREE MEMORY ID L_MEMORY_ID_HASH.                        "Y7AK023435
+  ENDIF.
+
+ENDFORM.
+
+FORM HANDLE_DOUBLE_CLICK_100  USING PS_ROW_ID STRUCTURE LVC_S_ROW
+                                    PS_COLUMN_ID STRUCTURE LVC_S_COL.
+
+  DATA: LT_TABLE TYPE REF TO DATA,
+        LS_TABLE TYPE REF TO DATA.
+
+  FIELD-SYMBOLS: <LS_TABLE> TYPE ANY,
+                 <FS_BUKRS> TYPE ANY,
+                 <FS_WERKS> TYPE ANY,
+                 <FS_MATNR> TYPE ANY,
+                 <LS_DISP>  TYPE ANY,
+                 <FS_LIFNR> TYPE ANY.
+
+  CREATE DATA LS_TABLE LIKE LINE OF <GT_TABLE>.
+  ASSIGN LS_TABLE->* TO <LS_DISP>.
+
+  CHECK PS_ROW_ID-ROWTYPE IS INITIAL.
+  READ TABLE <GT_TABLE> ASSIGNING <LS_DISP>
+                        INDEX PS_ROW_ID-INDEX.
+
+  ASSIGN COMPONENT: 'WERKS' OF STRUCTURE <LS_DISP> TO <FS_WERKS>,
+                    'MATNR' OF STRUCTURE <LS_DISP> TO <FS_MATNR>,
+                    'lifnr' OF STRUCTURE <LS_DISP> TO <FS_LIFNR>.
+
+  CHECK SY-SUBRC = 0.
+
+  CASE PS_COLUMN_ID-FIELDNAME.
+    WHEN 'MATNR' OR 'MAKTX'.
+      IF <FS_MATNR> IS INITIAL.
+        MESSAGE S000 WITH 'There is no Material' DISPLAY LIKE 'E'.
+      ELSE.
+        SET PARAMETER ID 'MAT' FIELD <FS_MATNR>.
+        SET PARAMETER ID 'WRK' FIELD <FS_WERKS>.
+        SET PARAMETER ID 'MXX' FIELD 'K'.
+        CALL TRANSACTION 'MM03' AND SKIP FIRST SCREEN.
+      ENDIF.
+    WHEN 'LIFNR' OR 'LIFNR_TX'.
+      DATA: KDY_VAL(8) VALUE '/110'.
+      SET PARAMETER ID 'LIF' FIELD <FS_LIFNR>.   " Pass the vendor
+      SET PARAMETER ID 'KDY' FIELD KDY_VAL.
+      CALL TRANSACTION 'XK03' AND SKIP FIRST SCREEN.
+
+    WHEN OTHERS.
+      CASE PS_COLUMN_ID-FIELDNAME+0(6).
+        WHEN 'MENGE_' OR 'DMBTR_' OR 'DMAVG_'.
+          IF PS_COLUMN_ID-FIELDNAME EQ 'MENGE_SIT' OR
+             PS_COLUMN_ID-FIELDNAME EQ 'DMBTR_SIT' OR
+             PS_COLUMN_ID-FIELDNAME EQ 'DMAVG_SIT'.  "미착품
+
+            PERFORM SHOW_SIT_DATA CHANGING <LS_DISP>.
+
+          ELSE.
+
+            PERFORM SHOW_GROUP_RAW USING PS_COLUMN_ID-FIELDNAME
+                                         '0100'
+                                   CHANGING <LS_DISP>.
+
+          ENDIF.
+        WHEN OTHERS.
+      ENDCASE.
+
+  ENDCASE.
+
+*    EXPORTING
+
+ENDFORM.
+
+FORM HANDLE_DOUBLE_CLICK_200  USING PS_ROW_ID STRUCTURE LVC_S_ROW
+                                    PS_COLUMN_ID STRUCTURE LVC_S_COL.
+
+  CHECK PS_ROW_ID-ROWTYPE IS INITIAL.
+  READ TABLE GT_RAW_DISP ASSIGNING FIELD-SYMBOL(<FS_RAW>)
+                        INDEX PS_ROW_ID-INDEX.
+
+  CHECK SY-SUBRC = 0.
+
+  CASE PS_COLUMN_ID-FIELDNAME.
+    WHEN 'MATNR' OR 'MAKTX'.
+      IF <FS_RAW>-MATNR IS INITIAL.
+        MESSAGE S000 WITH 'There is no Material' DISPLAY LIKE 'E'.
+      ELSE.
+        SET PARAMETER ID 'MAT' FIELD <FS_RAW>-MATNR.
+        SET PARAMETER ID 'WRK' FIELD <FS_RAW>-WERKS.
+        SET PARAMETER ID 'MXX' FIELD 'K'.
+        CALL TRANSACTION 'MM03' AND SKIP FIRST SCREEN.
+      ENDIF.
+
+    WHEN 'CHARG'.
+      SET PARAMETER ID 'MAT' FIELD <FS_RAW>-MATNR.
+      SET PARAMETER ID 'WRK' FIELD <FS_RAW>-WERKS.
+      SET PARAMETER ID 'CHA' FIELD <FS_RAW>-CHARG.
+      CALL TRANSACTION 'MSC3N' AND SKIP FIRST SCREEN.
+
+    WHEN 'BELNR' OR 'GJAHR' OR 'BUZEI'.
+      IF <FS_RAW>-BELNR IS NOT INITIAL.
+        IF <FS_RAW>-ZSP_CHK EQ C_X.
+          SET PARAMETER ID 'MLN' FIELD <FS_RAW>-BELNR.
+          SET PARAMETER ID 'MLJ' FIELD <FS_RAW>-GJAHR.
+          CALL TRANSACTION 'CKMB' AND SKIP FIRST SCREEN.
+        ELSE.
+          SET PARAMETER ID 'RBN' FIELD <FS_RAW>-BELNR.
+          SET PARAMETER ID 'GJR' FIELD <FS_RAW>-GJAHR.
+          CALL TRANSACTION 'MIR4' AND SKIP FIRST SCREEN.
+        ENDIF.
+      ENDIF.
+
+    WHEN OTHERS.
+      IF <FS_RAW>-MBLNR IS NOT INITIAL.
+        IF <FS_RAW>-ZSP_CHK EQ C_X.
+
+          SET PARAMETER ID 'BLN' FIELD <FS_RAW>-MBLNR.
+          SET PARAMETER ID 'BUK' FIELD <FS_RAW>-BUKRS.
+          SET PARAMETER ID 'GJR' FIELD <FS_RAW>-MJAHR.
+          CALL TRANSACTION 'FB03' AND SKIP FIRST SCREEN.
+
+        ELSE.
+          CALL FUNCTION 'MIGO_DIALOG'
+            EXPORTING
+              I_ACTION            = 'A04'
+              I_REFDOC            = 'R02'
+              I_MBLNR             = <FS_RAW>-MBLNR
+              I_MJAHR             = <FS_RAW>-MJAHR
+            EXCEPTIONS
+              ILLEGAL_COMBINATION = 1
+              OTHERS              = 2.
+          IF SY-SUBRC <> 0.
+
+* Implement suitable error handling here
+
+          ENDIF.
+        ENDIF.
+      ENDIF.
+  ENDCASE.
+
+ENDFORM.
+
+FORM HANDLE_DOUBLE_CLICK_300  USING PS_ROW_ID STRUCTURE LVC_S_ROW
+                                    PS_COLUMN_ID STRUCTURE LVC_S_COL.
+
+  CHECK PS_ROW_ID-ROWTYPE IS INITIAL.
+  READ TABLE GT_SIT_DISP ASSIGNING FIELD-SYMBOL(<FS_SIT>)
+                        INDEX PS_ROW_ID-INDEX.
+
+  CHECK SY-SUBRC = 0.
+
+  PERFORM SHOW_GRLIST_DATA CHANGING <FS_SIT>.
+
+ENDFORM.
+
+FORM HANDLE_DOUBLE_CLICK_400  USING PS_ROW_ID STRUCTURE LVC_S_ROW
+                                    PS_COLUMN_ID STRUCTURE LVC_S_COL.
+
+  DATA: LT_TABLE TYPE REF TO DATA,
+        LS_TABLE TYPE REF TO DATA.
+
+  FIELD-SYMBOLS: <LS_TABLE> TYPE ANY,
+                 <FS_BUKRS> TYPE ANY,
+                 <FS_WERKS> TYPE ANY,
+                 <FS_MATNR> TYPE ANY,
+                 <FS_CHARG> TYPE ANY,
+                 <LS_DISP>  TYPE ANY,
+                 <FS_LIFNR> TYPE ANY.
+
+  CREATE DATA LS_TABLE LIKE LINE OF <GT_BATCH>.
+  ASSIGN LS_TABLE->* TO <LS_DISP>.
+
+  CHECK PS_ROW_ID-ROWTYPE IS INITIAL.
+  READ TABLE <GT_BATCH> ASSIGNING <LS_DISP>
+                        INDEX PS_ROW_ID-INDEX.
+
+  ASSIGN COMPONENT: 'WERKS' OF STRUCTURE <LS_DISP> TO <FS_WERKS>,
+                    'MATNR' OF STRUCTURE <LS_DISP> TO <FS_MATNR>,
+                    'CHARG' OF STRUCTURE <LS_DISP> TO <FS_CHARG>,
+                    'LIFNR' OF STRUCTURE <LS_DISP> TO <FS_LIFNR>.
+
+  CHECK SY-SUBRC = 0.
+
+  CASE PS_COLUMN_ID-FIELDNAME.
+    WHEN 'MATNR' OR 'MAKTX'.
+      IF <FS_MATNR> IS INITIAL.
+        MESSAGE S000 WITH 'There is no Material' DISPLAY LIKE 'E'.
+      ELSE.
+        SET PARAMETER ID 'MAT' FIELD <FS_MATNR>.
+        SET PARAMETER ID 'WRK' FIELD <FS_WERKS>.
+        SET PARAMETER ID 'MXX' FIELD 'K'.
+        CALL TRANSACTION 'MM03' AND SKIP FIRST SCREEN.
+      ENDIF.
+
+    WHEN 'CHARG'.
+      SET PARAMETER ID 'MAT' FIELD <FS_MATNR>.
+      SET PARAMETER ID 'WRK' FIELD <FS_WERKS>.
+      SET PARAMETER ID 'CHA' FIELD <FS_CHARG>.
+      CALL TRANSACTION 'MSC3N' AND SKIP FIRST SCREEN.
+
+    WHEN 'LIFNR' OR 'LIFNR_TX'.
+      DATA: KDY_VAL(8) VALUE '/110'.
+      SET PARAMETER ID 'LIF' FIELD <FS_LIFNR>.   " Pass the vendor
+      SET PARAMETER ID 'KDY' FIELD KDY_VAL.
+      CALL TRANSACTION 'XK03' AND SKIP FIRST SCREEN.
+
+    WHEN OTHERS.
+
+      CASE PS_COLUMN_ID-FIELDNAME+0(6).
+        WHEN 'MENGE_' OR 'DMBTR_'.
+          IF PS_COLUMN_ID-FIELDNAME EQ 'MENGE_BI' OR
+             PS_COLUMN_ID-FIELDNAME EQ 'MENGE_EI' OR
+             PS_COLUMN_ID-FIELDNAME EQ 'MENGE_SG_EI'.
+
+          ELSEIF PS_COLUMN_ID-FIELDNAME EQ 'MENGE_SIT'.
+
+            PERFORM SHOW_SIT_DATA_BATCH CHANGING <LS_DISP>.
+
+          ELSE.
+
+            PERFORM SHOW_GROUP_RAW USING PS_COLUMN_ID-FIELDNAME
+                                         '0400'
+                                   CHANGING <LS_DISP>.
+
+          ENDIF.
+        WHEN OTHERS.
+      ENDCASE.
+
+  ENDCASE.
+
+ENDFORM.
+
+FORM HANDLE_DOUBLE_CLICK_500  USING PS_ROW_ID STRUCTURE LVC_S_ROW
+                                    PS_COLUMN_ID STRUCTURE LVC_S_COL.
+
+  CHECK PS_ROW_ID-ROWTYPE IS INITIAL.
+  READ TABLE GT_DISP_0500 ASSIGNING FIELD-SYMBOL(<FS_RAW>)
+                        INDEX PS_ROW_ID-INDEX.
+
+  CHECK SY-SUBRC = 0.
+
+  CASE PS_COLUMN_ID-FIELDNAME.
+    WHEN 'MATNR' OR 'MAKTX'.
+      IF <FS_RAW>-MATNR IS INITIAL.
+        MESSAGE S000 WITH 'There is no Material' DISPLAY LIKE 'E'.
+      ELSE.
+        SET PARAMETER ID 'MAT' FIELD <FS_RAW>-MATNR.
+        SET PARAMETER ID 'WRK' FIELD <FS_RAW>-WERKS.
+        SET PARAMETER ID 'MXX' FIELD 'K'.
+        CALL TRANSACTION 'MM03' AND SKIP FIRST SCREEN.
+      ENDIF.
+
+    WHEN 'CHARG'.
+      SET PARAMETER ID 'MAT' FIELD <FS_RAW>-MATNR.
+      SET PARAMETER ID 'WRK' FIELD <FS_RAW>-WERKS.
+      SET PARAMETER ID 'CHA' FIELD <FS_RAW>-CHARG.
+      CALL TRANSACTION 'MSC3N' AND SKIP FIRST SCREEN.
+
+    WHEN 'BELNR' OR 'GJAHR' OR 'BUZEI'.
+      IF <FS_RAW>-BELNR IS NOT INITIAL.
+        IF <FS_RAW>-ZSP_CHK EQ C_X.
+          SET PARAMETER ID 'MLN' FIELD <FS_RAW>-BELNR.
+          SET PARAMETER ID 'MLJ' FIELD <FS_RAW>-GJAHR.
+          CALL TRANSACTION 'CKMB' AND SKIP FIRST SCREEN.
+        ELSE.
+          SET PARAMETER ID 'RBN' FIELD <FS_RAW>-BELNR.
+          SET PARAMETER ID 'GJR' FIELD <FS_RAW>-GJAHR.
+          CALL TRANSACTION 'MIR4' AND SKIP FIRST SCREEN.
+        ENDIF.
+      ENDIF.
+
+    WHEN OTHERS.
+      IF <FS_RAW>-MBLNR IS NOT INITIAL.
+        IF <FS_RAW>-ZSP_CHK EQ C_X.
+
+          SET PARAMETER ID 'BLN' FIELD <FS_RAW>-MBLNR.
+          SET PARAMETER ID 'BUK' FIELD <FS_RAW>-BUKRS.
+          SET PARAMETER ID 'GJR' FIELD <FS_RAW>-MJAHR.
+          CALL TRANSACTION 'FB03' AND SKIP FIRST SCREEN.
+
+        ELSE.
+          CALL FUNCTION 'MIGO_DIALOG'
+            EXPORTING
+              I_ACTION            = 'A04'
+              I_REFDOC            = 'R02'
+              I_MBLNR             = <FS_RAW>-MBLNR
+              I_MJAHR             = <FS_RAW>-MJAHR
+            EXCEPTIONS
+              ILLEGAL_COMBINATION = 1
+              OTHERS              = 2.
+          IF SY-SUBRC <> 0.
+
+* Implement suitable error handling here
+
+          ENDIF.
+        ENDIF.
+      ENDIF.
+  ENDCASE.
+
+ENDFORM.
+
+FORM HANDLER_TOOLBAR USING PO_OBJECT TYPE REF TO CL_ALV_EVENT_TOOLBAR_SET
+                           PO_SENDER TYPE REF TO CL_GUI_ALV_GRID.
+
+  " Internal Table PO_OBJECT->MT_TOOLBAR 를 위한 작업공간
+  " PO_OBJECT->MT_TOOLBAR >>> 클래스의 Attribute ( Public , Instance )
+  DATA LS_TOOLBAR LIKE LINE OF PO_OBJECT->MT_TOOLBAR.
+
+  DATA : LV_INVOICE TYPE I,
+         LV_OK      TYPE I,
+         LV_ING     TYPE I,
+         LV_NO      TYPE I.
+
+  CASE PO_SENDER.
+    WHEN GCL_GRID_MAIN.
+
+* 구분자 =>> |
+
+      CLEAR LS_TOOLBAR.
+      LS_TOOLBAR-BUTN_TYPE = 3. " 구분자
+      APPEND LS_TOOLBAR TO PO_OBJECT->MT_TOOLBAR.
+
+* 버튼 추가 =>> 전체조회
+
+      CLEAR LS_TOOLBAR.
+      LS_TOOLBAR-BUTN_TYPE = 0. " 사용가능 배치번호 O/X
+      LS_TOOLBAR-FUNCTION = GC_INVOICE.
+      LS_TOOLBAR-ICON = ICON_SELECT_DETAIL.
+      LS_TOOLBAR-TEXT = TEXT-B11.
+      APPEND LS_TOOLBAR TO PO_OBJECT->MT_TOOLBAR.
+
+  ENDCASE.
+
+ENDFORM.
+
+FORM HANDLER_TOOLBAR_0400 USING PO_OBJECT TYPE REF TO CL_ALV_EVENT_TOOLBAR_SET
+                                PO_SENDER TYPE REF TO CL_GUI_ALV_GRID.
+
+  " Internal Table PO_OBJECT->MT_TOOLBAR 를 위한 작업공간
+  " PO_OBJECT->MT_TOOLBAR >>> 클래스의 Attribute ( Public , Instance )
+  DATA LS_TOOLBAR LIKE LINE OF PO_OBJECT->MT_TOOLBAR.
+
+  DATA : LV_INVOICE TYPE I,
+         LV_OK      TYPE I,
+         LV_ING     TYPE I,
+         LV_NO      TYPE I.
+
+  CASE PO_SENDER.
+    WHEN GCL_GRID_MAIN.
+
+* 구분자 =>> |
+
+      CLEAR LS_TOOLBAR.
+      LS_TOOLBAR-BUTN_TYPE = 3. " 구분자
+      APPEND LS_TOOLBAR TO PO_OBJECT->MT_TOOLBAR.
+
+* 버튼 추가 =>> 전체조회
+
+      CLEAR LS_TOOLBAR.
+      LS_TOOLBAR-BUTN_TYPE = 0. " 사용가능 배치번호 O/X
+      LS_TOOLBAR-FUNCTION = GC_INVOICE.
+      LS_TOOLBAR-ICON = ICON_SELECT_DETAIL.
+      LS_TOOLBAR-TEXT = TEXT-B11.
+      APPEND LS_TOOLBAR TO PO_OBJECT->MT_TOOLBAR.
+
+  ENDCASE.
+
+ENDFORM.
+
+FORM HANDLE_USER_COMMAND_100  USING PV_UCOMM   TYPE SY-UCOMM
+                                    PO_SENDER  TYPE REF TO CL_GUI_ALV_GRID.
+
+  DATA LT_INDEX_ROWS TYPE LVC_T_ROW.
+  DATA LS_INDEX_ROW  LIKE LINE OF LT_INDEX_ROWS.
+  DATA LS_MATDOC     LIKE LINE OF GT_DISP_0500.
+  DATA LS_GROUP      LIKE LINE OF GT_GROUP.
+  DATA: LT_TABLE TYPE REF TO DATA,
+        LS_TABLE TYPE REF TO DATA.
+
+  FIELD-SYMBOLS: <LS_TABLE> TYPE ANY,
+                 <FS_BUKRS> TYPE ANY,
+                 <FS_WERKS> TYPE ANY,
+                 <FS_MATNR> TYPE ANY,
+                 <LS_DISP>  TYPE ANY,
+                 <FS_LIFNR> TYPE ANY.
+
+  CREATE DATA LS_TABLE LIKE LINE OF <GT_TABLE>.
+  ASSIGN LS_TABLE->* TO <LS_DISP>.
+
+  CASE PO_SENDER.
+    WHEN GCL_GRID_MAIN.
+
+      CASE PV_UCOMM.
+        WHEN GC_INVOICE.
+
+          CALL METHOD GCL_GRID_MAIN->GET_SELECTED_ROWS
+            IMPORTING
+              ET_INDEX_ROWS = LT_INDEX_ROWS.     " Indexes of Selected Rows
+
+          IF LT_INDEX_ROWS[] IS INITIAL.
+            " Select line to display detail item.
+            MESSAGE S081 DISPLAY LIKE 'E'.
+          ELSE.
+
+            CLEAR: GT_MATDOC[], GT_DISP_0500[].
+
+            LOOP AT LT_INDEX_ROWS INTO LS_INDEX_ROW WHERE ROWTYPE IS INITIAL.
+
+*             <GS_TABLE>.
+
+              READ TABLE <GT_TABLE> INTO <LS_DISP> INDEX LS_INDEX_ROW-INDEX.
+
+              ASSIGN COMPONENT: 'BUKRS' OF STRUCTURE <LS_DISP> TO <FS_BUKRS>,
+                                'WERKS' OF STRUCTURE <LS_DISP> TO <FS_WERKS>,
+                                'MATNR' OF STRUCTURE <LS_DISP> TO <FS_MATNR>,
+                                'LIFNR' OF STRUCTURE <LS_DISP> TO <FS_LIFNR>.
+
+* Read Matdoc
+
+              SELECT A~BUKRS          " 회사코드
+                     A~MJAHR          " 자재문서연도
+                     A~MBLNR          " 자재문서번호
+                     A~MATNR          " 자재번호
+                     B~MAKTX          " 자재내역(명)
+                     A~WERKS          " 플랜트
+                     A~LGORT          " 저장위치
+                     A~CHARG          " 배치(Batch)
+                     A~SOBKZ          " 특별재고지시자
+                     A~EMLIF     AS LIFNR
+                     D~NAME_ORG1 AS LIFNR_TX " 공급처명
+                     A~MENGE          " 수량
+                     A~DMBTR          " 금액(현지통화)
+                     A~WAERS          " 통화
+                     A~BWART          " 이동유형
+
+*                     H~BEIKZ           " MPI 추가
+
+                     A~GRUND          " 이동사유
+                     A~SHKZG          " 차변/대변 지시자
+                     A~MEINS          " 기본단위
+                     A~WAERS          " 통화
+                     A~ZEILE          " 자재문서항목
+                     E~MTART          " 자재유형
+                     A~VGART            "CHECK
+                     A~BUDAT            " 전기일 추가
+                     A~SALK3          " 총평가액
+                     A~LBKUM          " 총평가재고수량
+
+                INTO CORRESPONDING FIELDS OF TABLE GT_DISP_0500
+                FROM MATDOC AS A
+                LEFT OUTER JOIN MAKT AS B
+                  ON B~MATNR EQ A~MATNR
+                 AND B~SPRAS EQ SY-LANGU
+                LEFT OUTER JOIN BUT000 AS D
+                  ON D~PARTNER EQ A~EMLIF
+                LEFT OUTER JOIN MARA AS E
+                  ON E~MATNR EQ A~MATNR
+                JOIN ZMMPAT52010 AS H
+                  ON H~BWART EQ A~BWART
+               WHERE A~RECORD_TYPE EQ 'MDOC'
+                 AND A~BUDAT BETWEEN S_BUDAT-LOW AND S_BUDAT-HIGH
+                 AND A~MATNR EQ <FS_MATNR>
+                 AND A~WERKS EQ <FS_WERKS>
+                 AND A~EMLIF EQ <FS_LIFNR>
+                 AND A~CHARG IN GR_CHARG
+                 AND A~SOBKZ EQ 'O'.
+
+              APPEND LINES OF GT_DISP_0500 TO GT_MATDOC[].
+              CLEAR GT_DISP_0500[].
+            ENDLOOP.
+
+            IF GT_MATDOC[] IS INITIAL.
+              " No data found
+              MESSAGE S082 DISPLAY LIKE 'E'.
+              EXIT.
+            ENDIF.
+
+*--STO 금액 변환
+
+            DATA(LT_STO) = GT_MATDOC[].
+            DELETE LT_STO WHERE DMBTR NE 0.
+            DELETE LT_STO WHERE BWART NE '101'.
+
+            SELECT A~MJAHR,           " 자재문서연도
+                   A~MBLNR,           " 자재문서번호
+                   A~ZEILE,           " 자재문서항목
+                   A~MATNR,           " 자재번호
+                   A~WERKS,           " 플랜트
+                   A~LGORT_CID AS LGORT, " 저장위치
+                   A~CHARG_CID AS CHARG, " 배치(Batch)
+                   A~DMBTR            " 금액(현지통화)
+              FROM MATDOC AS A JOIN @LT_STO AS B
+                                 ON A~MJAHR     = B~MJAHR
+                                AND A~MBLNR     = B~MBLNR
+                                AND A~ZEILE     = B~ZEILE
+                                AND A~MATNR     = B~MATNR
+                                AND A~WERKS     = B~WERKS
+                                AND A~LGORT_CID = B~LGORT
+                                AND A~CHARG_CID = B~CHARG
+             WHERE A~RECORD_TYPE = 'MDOC_CP'
+               AND A~LBBSA_SID   = '06'
+               AND A~DMBTR NE 0
+              INTO TABLE @DATA(LT_STO_DMBTR).
+            SORT LT_STO_DMBTR BY MJAHR MBLNR ZEILE MATNR WERKS LGORT CHARG.
+
+*-- Group 및 차/대 반영
+
+            LOOP AT GT_MATDOC[] INTO LS_MATDOC.
+
+*--STO 금액 변환
+
+              IF LS_MATDOC-BWART = '101' AND LS_MATDOC-DMBTR = 0.
+                READ TABLE LT_STO_DMBTR INTO DATA(LS_STO_DMBTR) WITH KEY MJAHR = LS_MATDOC-MJAHR
+                                                                         MBLNR = LS_MATDOC-MBLNR
+                                                                         ZEILE = LS_MATDOC-ZEILE
+                                                                         MATNR = LS_MATDOC-MATNR
+                                                                         WERKS = LS_MATDOC-WERKS
+                                                                         LGORT = LS_MATDOC-LGORT
+                                                                         CHARG = LS_MATDOC-CHARG
+                                                                         BINARY SEARCH.
+                IF SY-SUBRC = 0.
+                  LS_MATDOC-DMBTR = LS_STO_DMBTR-DMBTR.
+                ENDIF.
+              ENDIF.
+              CLEAR LS_STO_DMBTR.
+
+              READ TABLE GT_GROUP INTO LS_GROUP
+                                  WITH KEY BWART = LS_MATDOC-BWART
+                                  BINARY SEARCH.
+              IF SY-SUBRC NE 0.
+                CASE LS_MATDOC-SHKZG.
+                  WHEN 'H'.
+                    LS_MATDOC-ZGROUP = GV_GI_ETC.
+                  WHEN 'S'.
+                    LS_MATDOC-ZGROUP = GV_GR_ETC.
+                ENDCASE.
+              ELSE.
+                LS_MATDOC-ZGROUP = LS_GROUP-ZGROUP.
+              ENDIF.
+
+              IF ( LS_MATDOC-ZGROUP(2) = 'GR' AND LS_MATDOC-SHKZG = 'H' ) OR
+                 ( LS_MATDOC-ZGROUP(2) = 'GI' AND LS_MATDOC-SHKZG = 'H' ).
+                LS_MATDOC-MENGE = LS_MATDOC-MENGE * -1.
+                LS_MATDOC-DMBTR = LS_MATDOC-DMBTR * -1.
+              ELSE.
+
+*              <FS_RAW>-MENGE.
+*              <FS_RAW>-DMBTR.
+
+              ENDIF.
+
+              CASE LS_MATDOC-BWART.
+                WHEN '541'.
+                  LS_MATDOC-SALK3 = LS_MATDOC-SALK3 / LS_MATDOC-LBKUM.
+                  LS_MATDOC-DMBTR = LS_MATDOC-MENGE * LS_MATDOC-SALK3.
+
+                WHEN '542'.
+                  LS_MATDOC-SALK3 = LS_MATDOC-SALK3 / LS_MATDOC-LBKUM.
+                  LS_MATDOC-DMBTR = LS_MATDOC-MENGE * LS_MATDOC-SALK3.
+
+              ENDCASE.
+
+*-- Mvt.Text 추가
+
+              SELECT SINGLE BTEXT
+                     INTO @DATA(LV_BTEXT)
+                     FROM T156T
+                     WHERE BWART EQ @LS_MATDOC-BWART
+                       AND SPRAS EQ @SY-LANGU.
+
+              LS_MATDOC-BTEXT = LV_BTEXT.
+
+              APPEND LS_MATDOC TO GT_DISP_0500.
+            ENDLOOP.
+
+*-- 정의된 Mvt에 포함되지 않은 값은 Delete
+
+            LOOP AT GT_DISP_0500 ASSIGNING FIELD-SYMBOL(<FS_DISP_0500>).
+
+              READ TABLE GT_GROUP WITH KEY BWART = <FS_DISP_0500>-BWART
+                                  TRANSPORTING NO FIELDS
+                                  BINARY SEARCH.
+
+              IF SY-SUBRC <> 0.
+                DELETE TABLE GT_DISP_0500 FROM <FS_DISP_0500>.
+
+              ENDIF.
+
+              IF <FS_DISP_0500>-MENGE < 0.
+                <FS_DISP_0500>-INFO = 'C600'.
+              ELSE.
+                <FS_DISP_0500>-INFO = 'C100'.
+              ENDIF.
+
+            ENDLOOP.
+
+            SORT GT_DISP_0500 BY BUDAT LIFNR MATNR CHARG.
+
+            CALL SCREEN 0500 STARTING AT 10 2
+            ENDING AT 170 30.
+
+          ENDIF.
+      ENDCASE.
+  ENDCASE.
+
+ENDFORM.
+
+FORM HANDLE_USER_COMMAND_400  USING PV_UCOMM   TYPE SY-UCOMM
+                                    PO_SENDER  TYPE REF TO CL_GUI_ALV_GRID.
+
+  DATA LT_INDEX_ROWS TYPE LVC_T_ROW.
+  DATA LS_INDEX_ROW  LIKE LINE OF LT_INDEX_ROWS.
+  DATA LS_MATDOC     LIKE LINE OF GT_DISP_0500.
+  DATA LS_GROUP      LIKE LINE OF GT_GROUP.
+  DATA: LT_TABLE TYPE REF TO DATA,
+        LS_TABLE TYPE REF TO DATA.
+
+  FIELD-SYMBOLS: <LS_TABLE> TYPE ANY,
+                 <FS_BUKRS> TYPE ANY,
+                 <FS_WERKS> TYPE ANY,
+                 <FS_LGORT> TYPE ANY,
+                 <FS_MATNR> TYPE ANY,
+                 <LS_DISP>  TYPE ANY,
+                 <FS_LIFNR> TYPE ANY,
+                 <FS_CHARG> TYPE ANY.
+
+  CREATE DATA LS_TABLE LIKE LINE OF <GT_BATCH>.
+  ASSIGN LS_TABLE->* TO <LS_DISP>.
+
+  CASE PO_SENDER.
+    WHEN GCL_GRID_MAIN.
+
+      CASE PV_UCOMM.
+        WHEN GC_INVOICE.
+
+          CALL METHOD GCL_GRID_MAIN->GET_SELECTED_ROWS
+            IMPORTING
+              ET_INDEX_ROWS = LT_INDEX_ROWS.     " Indexes of Selected Rows
+
+          IF LT_INDEX_ROWS[] IS INITIAL.
+            " Select line to display detail item.
+            MESSAGE S081 DISPLAY LIKE 'E'.
+          ELSE.
+
+            CLEAR: GT_MATDOC[], GT_DISP_0500[].
+
+            LOOP AT LT_INDEX_ROWS INTO LS_INDEX_ROW WHERE ROWTYPE IS INITIAL.
+
+*             <GS_TABLE>.
+
+              READ TABLE <GT_BATCH> INTO <LS_DISP> INDEX LS_INDEX_ROW-INDEX.
+
+              ASSIGN COMPONENT: 'BUKRS' OF STRUCTURE <LS_DISP> TO <FS_BUKRS>,
+                                'WERKS' OF STRUCTURE <LS_DISP> TO <FS_WERKS>,
+                                'LGORT' OF STRUCTURE <LS_DISP> TO <FS_LGORT>,
+                                'MATNR' OF STRUCTURE <LS_DISP> TO <FS_MATNR>,
+                                'LIFNR' OF STRUCTURE <LS_DISP> TO <FS_LIFNR>,
+                                'CHARG' OF STRUCTURE <LS_DISP> TO <FS_CHARG>.
+
+* Read Matdoc
+* 사급업체 없으면 일반 케이스 라인
+
+              IF <FS_LIFNR> IS INITIAL.
+                SELECT A~BUKRS        " 회사코드
+                       A~MJAHR        " 자재문서연도
+                       A~MBLNR        " 자재문서번호
+                       A~MATNR        " 자재번호
+                       B~MAKTX        " 자재내역(명)
+                       A~WERKS        " 플랜트
+                       A~LGORT        " 저장위치
+                       A~CHARG        " 배치(Batch)
+                       A~SOBKZ        " 특별재고지시자
+                       A~EMLIF     AS LIFNR
+                       D~NAME_ORG1 AS LIFNR_TX " 공급처명
+                       A~MENGE        " 수량
+                       A~DMBTR        " 금액(현지통화)
+                       A~WAERS        " 통화
+                       A~BWART        " 이동유형
+
+*                     H~BEIKZ           " MPI 추가
+
+                       A~GRUND        " 이동사유
+                       A~SHKZG        " 차변/대변 지시자
+                       A~MEINS        " 기본단위
+                       A~WAERS        " 통화
+                       A~ZEILE        " 자재문서항목
+                       E~MTART        " 자재유형
+                       A~VGART            "CHECK
+                       A~BUDAT            " 전기일 추가
+                       A~SALK3        " 총평가액
+                       A~LBKUM        " 총평가재고수량
+
+                  INTO CORRESPONDING FIELDS OF TABLE GT_DISP_0500
+                  FROM MATDOC AS A
+                  LEFT OUTER JOIN MAKT AS B
+                    ON B~MATNR EQ A~MATNR
+                   AND B~SPRAS EQ SY-LANGU
+                  LEFT OUTER JOIN BUT000 AS D
+                    ON D~PARTNER EQ A~EMLIF
+                  LEFT OUTER JOIN MARA AS E
+                    ON E~MATNR EQ A~MATNR
+                  JOIN ZMMPAT52010 AS H
+                    ON H~BWART EQ A~BWART
+                 WHERE A~RECORD_TYPE EQ 'MDOC'
+                   AND A~BUDAT BETWEEN S_BUDAT-LOW AND S_BUDAT-HIGH
+                   AND A~MATNR EQ <FS_MATNR>
+                   AND A~WERKS EQ <FS_WERKS>
+                   AND A~LGORT EQ <FS_LGORT>
+
+                   AND A~CHARG EQ <FS_CHARG>
+
+*                   AND A~BWART NOT IN ('541', '542', '543', '544'). " 사급 mvt 제외
+
+                 AND A~SOBKZ NE 'O'. " 사급 제외
+
+                APPEND LINES OF GT_DISP_0500 TO GT_MATDOC[].
+                CLEAR GT_DISP_0500[].
+
+              ELSE.
+
+* 사급업체 있으면 사급 케이스 라인
+*541, 542, 543, 544만
+
+                SELECT A~BUKRS        " 회사코드
+                       A~MJAHR        " 자재문서연도
+                       A~MBLNR        " 자재문서번호
+                       A~MATNR        " 자재번호
+                       B~MAKTX        " 자재내역(명)
+                       A~WERKS        " 플랜트
+                       A~LGORT        " 저장위치
+                       A~CHARG        " 배치(Batch)
+                       A~SOBKZ        " 특별재고지시자
+                       A~EMLIF     AS LIFNR
+                       D~NAME_ORG1 AS LIFNR_TX " 공급처명
+                       A~MENGE        " 수량
+                       A~DMBTR        " 금액(현지통화)
+                       A~WAERS        " 통화
+                       A~BWART        " 이동유형
+
+*                     H~BEIKZ           " MPI 추가
+
+                       A~GRUND        " 이동사유
+                       A~SHKZG        " 차변/대변 지시자
+                       A~MEINS        " 기본단위
+                       A~WAERS        " 통화
+                       A~ZEILE        " 자재문서항목
+                       E~MTART        " 자재유형
+                       A~VGART            "CHECK
+                       A~BUDAT            " 전기일 추가
+                       A~SALK3        " 총평가액
+                       A~LBKUM        " 총평가재고수량
+
+                  INTO CORRESPONDING FIELDS OF TABLE GT_DISP_0500
+                  FROM MATDOC AS A
+                  LEFT OUTER JOIN MAKT AS B
+                    ON B~MATNR EQ A~MATNR
+                   AND B~SPRAS EQ SY-LANGU
+                  LEFT OUTER JOIN BUT000 AS D
+                    ON D~PARTNER EQ A~EMLIF
+                  LEFT OUTER JOIN MARA AS E
+                    ON E~MATNR EQ A~MATNR
+                  JOIN ZMMPAT52010 AS H
+                    ON H~BWART EQ A~BWART
+                 WHERE A~RECORD_TYPE EQ 'MDOC'
+                   AND A~BUDAT BETWEEN S_BUDAT-LOW AND S_BUDAT-HIGH
+                   AND A~MATNR EQ <FS_MATNR>
+                   AND A~WERKS EQ <FS_WERKS>
+                   AND A~LGORT EQ <FS_LGORT>
+                   AND A~EMLIF EQ <FS_LIFNR>
+                   AND A~CHARG EQ <FS_CHARG>
+
+*                   AND A~BWART IN ('541', '542', '543', '544'). " 사급 mvt만
+
+                 AND A~SOBKZ EQ 'O'. " 사급재고만
+
+                APPEND LINES OF GT_DISP_0500 TO GT_MATDOC[].
+                CLEAR GT_DISP_0500[].
+              ENDIF.
+            ENDLOOP.
+
+            IF GT_MATDOC[] IS INITIAL.
+              " No data found
+              MESSAGE S082 DISPLAY LIKE 'E'.
+              EXIT.
+            ENDIF.
+
+*--STO 금액 변환
+
+            DATA(LT_STO) = GT_MATDOC[].
+            DELETE LT_STO WHERE DMBTR NE 0.
+            DELETE LT_STO WHERE BWART NE '101'.
+
+            SELECT A~MJAHR,           " 자재문서연도
+                   A~MBLNR,           " 자재문서번호
+                   A~ZEILE,           " 자재문서항목
+                   A~MATNR,           " 자재번호
+                   A~WERKS,           " 플랜트
+                   A~LGORT_CID AS LGORT, " 저장위치
+                   A~CHARG_CID AS CHARG, " 배치(Batch)
+                   A~DMBTR            " 금액(현지통화)
+              FROM MATDOC AS A JOIN @LT_STO AS B
+                                 ON A~MJAHR     = B~MJAHR
+                                AND A~MBLNR     = B~MBLNR
+                                AND A~ZEILE     = B~ZEILE
+                                AND A~MATNR     = B~MATNR
+                                AND A~WERKS     = B~WERKS
+                                AND A~LGORT_CID = B~LGORT
+                                AND A~CHARG_CID = B~CHARG
+             WHERE A~RECORD_TYPE = 'MDOC_CP'
+               AND A~LBBSA_SID   = '06'
+               AND A~DMBTR NE 0
+              INTO TABLE @DATA(LT_STO_DMBTR).
+            SORT LT_STO_DMBTR BY MJAHR MBLNR ZEILE MATNR WERKS LGORT CHARG.
+
+*-- Group 및 차/대 반영
+
+            LOOP AT GT_MATDOC[] INTO LS_MATDOC.
+
+*--STO 금액 변환
+
+              IF LS_MATDOC-BWART = '101' AND LS_MATDOC-DMBTR = 0.
+                READ TABLE LT_STO_DMBTR INTO DATA(LS_STO_DMBTR) WITH KEY MJAHR = LS_MATDOC-MJAHR
+                                                                         MBLNR = LS_MATDOC-MBLNR
+                                                                         ZEILE = LS_MATDOC-ZEILE
+                                                                         MATNR = LS_MATDOC-MATNR
+                                                                         WERKS = LS_MATDOC-WERKS
+                                                                         LGORT = LS_MATDOC-LGORT
+                                                                         CHARG = LS_MATDOC-CHARG
+                                                                         BINARY SEARCH.
+                IF SY-SUBRC = 0.
+                  LS_MATDOC-DMBTR = LS_STO_DMBTR-DMBTR.
+                ENDIF.
+              ENDIF.
+              CLEAR LS_STO_DMBTR.
+
+              READ TABLE GT_GROUP INTO LS_GROUP
+                                  WITH KEY BWART = LS_MATDOC-BWART
+                                  BINARY SEARCH.
+              IF SY-SUBRC NE 0.
+                CASE LS_MATDOC-SHKZG.
+                  WHEN 'H'.
+                    LS_MATDOC-ZGROUP = GV_GI_ETC.
+                  WHEN 'S'.
+                    LS_MATDOC-ZGROUP = GV_GR_ETC.
+                ENDCASE.
+              ELSE.
+                LS_MATDOC-ZGROUP = LS_GROUP-ZGROUP.
+              ENDIF.
+
+              IF ( LS_MATDOC-ZGROUP(2) = 'GR' AND LS_MATDOC-SHKZG = 'H' ) OR
+                 ( LS_MATDOC-ZGROUP(2) = 'GI' AND LS_MATDOC-SHKZG = 'H' ).
+                LS_MATDOC-MENGE = LS_MATDOC-MENGE * -1.
+                LS_MATDOC-DMBTR = LS_MATDOC-DMBTR * -1.
+              ELSE.
+
+*              <FS_RAW>-MENGE.
+*              <FS_RAW>-DMBTR.
+
+              ENDIF.
+
+*
+
+*-- Mvt.Text 추가
+
+              SELECT SINGLE BTEXT
+                     INTO @DATA(LV_BTEXT)
+                     FROM T156T
+                     WHERE BWART EQ @LS_MATDOC-BWART
+                       AND SPRAS EQ @SY-LANGU.
+
+              LS_MATDOC-BTEXT = LV_BTEXT.
+
+**-- 생산오더 Number select
+*                  INTO CORRESPONDING FIELDS OF LS_MATDOC
+
+              APPEND LS_MATDOC TO GT_DISP_0500.
+            ENDLOOP.
+
+*-- 정의된 Mvt에 포함되지 않은 값은 Delete
+
+            LOOP AT GT_DISP_0500 ASSIGNING FIELD-SYMBOL(<FS_DISP_0500>).
+
+              READ TABLE GT_GROUP WITH KEY BWART = <FS_DISP_0500>-BWART TRANSPORTING NO FIELDS.
+
+              IF SY-SUBRC <> 0.
+                DELETE TABLE GT_DISP_0500 FROM <FS_DISP_0500>.
+
+              ENDIF.
+
+              IF <FS_DISP_0500>-MENGE < 0.
+                <FS_DISP_0500>-INFO = 'C600'.
+              ELSE.
+                <FS_DISP_0500>-INFO = 'C100'.
+              ENDIF.
+
+            ENDLOOP.
+
+            SORT GT_DISP_0500 BY WERKS LIFNR MATNR BUDAT.
+
+            CALL SCREEN 0500 STARTING AT 10 2
+            ENDING AT 170 30.
+
+          ENDIF.
+      ENDCASE.
+  ENDCASE.
+
+ENDFORM.
+
