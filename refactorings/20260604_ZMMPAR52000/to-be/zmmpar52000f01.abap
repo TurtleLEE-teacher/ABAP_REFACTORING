@@ -1371,20 +1371,20 @@ FORM MATERIAL_DOC_BASIC_STOCK .
 *--------------------------------------------------------------------*
 * Total stocks
 
-  SELECT E~BUKRS,
-         A~WERKS,
-         A~MATNR,
-         B~MAKTX,
+  SELECT E~BUKRS,                     " 회사코드
+         A~WERKS,                     " 플랜트
+         A~MATNR,                     " 자재번호
+         B~MAKTX,                     " 자재내역(명)
 
 *         A~SOBKZ,
 *         A~LIFNR,
 *         C~NAME_ORG1 AS LIFNR_TX,
 
-         A~LGORT,
-         H~LGOBE,
-         A~CHARG,
-         E~WAERS,
-         G~VERPR,
+         A~LGORT,                     " 저장위치
+         H~LGOBE,                     " 저장위치명
+         A~CHARG,                     " 배치(Batch)
+         E~WAERS,                     " 통화
+         G~VERPR,                     " 이동평균가
          SUM( A~CLABS ) AS CLABS
    INTO CORRESPONDING FIELDS OF TABLE @LT_RAW_0400
         FROM MCHB AS A
@@ -1433,18 +1433,18 @@ FORM MATERIAL_DOC_BASIC_STOCK .
 **사급재고일 경우 현재 재고를 MSLB에서 추가해준다.
 * Special Stocks with Supplier / 현재고
 
-    SELECT E~BUKRS,
-           E~WAERS,
-           A~WERKS,
-           A~MATNR,
-           B~MAKTX,
-           A~CHARG,
+    SELECT E~BUKRS,                   " 회사코드
+           E~WAERS,                   " 통화
+           A~WERKS,                   " 플랜트
+           A~MATNR,                   " 자재번호
+           B~MAKTX,                   " 자재내역(명)
+           A~CHARG,                   " 배치(Batch)
 
 *         A~SOBKZ,
 
-           A~LIFNR,
-           C~NAME_ORG1 AS LIFNR_TX,
-           G~VERPR,
+           A~LIFNR,                   " 공급처(Vendor)
+           C~NAME_ORG1 AS LIFNR_TX,   " 공급처명
+           G~VERPR,                   " 이동평균가
 
 *         ' ' AS LGORT,
 *         ' ' AS LGOBE,
@@ -1528,37 +1528,37 @@ FORM MATERIAL_DOC_BASIC_STOCK .
 * BATCH 기초수량
 * Material Document
 
-  SELECT A~BUKRS
-         A~MJAHR
-         A~MBLNR
-         A~MATNR
-         B~MAKTX
-         A~WERKS
-         A~LGORT
-         I~LGOBE
-         A~CHARG
-         A~SOBKZ
-         A~LIFNR_SID AS LIFNR
-         D~NAME_ORG1 AS LIFNR_TX
-         A~MENGE
-         A~DMBTR
-         A~WAERS
-         A~BWART
-         A~GRUND
-         A~SHKZG
-         A~MEINS
-         A~WAERS
-         A~ZEILE
-         E~MTART
+  SELECT A~BUKRS                      " 회사코드
+         A~MJAHR                      " 자재문서연도
+         A~MBLNR                      " 자재문서번호
+         A~MATNR                      " 자재번호
+         B~MAKTX                      " 자재내역(명)
+         A~WERKS                      " 플랜트
+         A~LGORT                      " 저장위치
+         I~LGOBE                      " 저장위치명
+         A~CHARG                      " 배치(Batch)
+         A~SOBKZ                      " 특별재고지시자
+         A~LIFNR_SID AS LIFNR         " 공급처(Vendor)
+         D~NAME_ORG1 AS LIFNR_TX      " 공급처명
+         A~MENGE                      " 수량
+         A~DMBTR                      " 금액(현지통화)
+         A~WAERS                      " 통화
+         A~BWART                      " 이동유형
+         A~GRUND                      " 이동사유
+         A~SHKZG                      " 차변/대변 지시자
+         A~MEINS                      " 기본단위
+         A~WAERS                      " 통화
+         A~ZEILE                      " 자재문서항목
+         E~MTART                      " 자재유형
          A~VGART            "CHECK
          A~BUDAT            " 전기일 추가
-         F~VERPR
-         A~SALK3
-         A~LBKUM
+         F~VERPR                      " 이동평균가
+         A~SALK3                      " 총평가액
+         A~LBKUM                      " 총평가재고수량
 
 *         H~BEIKZ
 
-         H~ZGROUP
+         H~ZGROUP                     " 이동유형 그룹코드
     INTO CORRESPONDING FIELDS OF TABLE GT_BATCH_0400
                        FROM MATDOC AS A
                        LEFT OUTER JOIN MAKT AS B
@@ -1643,14 +1643,14 @@ FORM MATERIAL_DOC_BASIC_STOCK .
   DELETE LT_STO WHERE DMBTR NE 0.
   DELETE LT_STO WHERE BWART NE '101'.
 
-  SELECT A~MJAHR,
-         A~MBLNR,
-         A~ZEILE,
-         A~MATNR,
-         A~WERKS,
-         A~LGORT_CID AS LGORT,
-         A~CHARG_CID AS CHARG,
-         A~DMBTR
+  SELECT A~MJAHR,                     " 자재문서연도
+         A~MBLNR,                     " 자재문서번호
+         A~ZEILE,                     " 자재문서항목
+         A~MATNR,                     " 자재번호
+         A~WERKS,                     " 플랜트
+         A~LGORT_CID AS LGORT,        " 저장위치
+         A~CHARG_CID AS CHARG,        " 배치(Batch)
+         A~DMBTR                      " 금액(현지통화)
     FROM MATDOC AS A JOIN @LT_STO AS B
                        ON A~MJAHR     = B~MJAHR
                       AND A~MBLNR     = B~MBLNR
@@ -1739,21 +1739,21 @@ FORM MATERIAL_DOC_BASIC_STOCK .
 
 * STO 운송중 재고 추가
 
-  SELECT M1~BUKRS,
-         M1~MJAHR,
-         M1~MBLNR,
-         M1~MATNR,
-         B~MAKTX,
-         M1~WERKS,
-         M1~LGORT,
-         M1~MEINS,
-         M1~MENGE,
-         M1~BWTAR AS CHARG,
-         M1~BWART,
-         M1~SHKZG,
-         M1~DMBTR,
-         M1~BUDAT,
-         M1~WAERS,
+  SELECT M1~BUKRS,                    " 회사코드
+         M1~MJAHR,                    " 자재문서연도
+         M1~MBLNR,                    " 자재문서번호
+         M1~MATNR,                    " 자재번호
+         B~MAKTX,                     " 자재내역(명)
+         M1~WERKS,                    " 플랜트
+         M1~LGORT,                    " 저장위치
+         M1~MEINS,                    " 기본단위
+         M1~MENGE,                    " 수량
+         M1~BWTAR AS CHARG,           " 평가유형
+         M1~BWART,                    " 이동유형
+         M1~SHKZG,                    " 차변/대변 지시자
+         M1~DMBTR,                    " 금액(현지통화)
+         M1~BUDAT,                    " 전기일
+         M1~WAERS,                    " 통화
          'GR5' AS ZGROUP
     FROM MATDOC AS M1 LEFT OUTER JOIN MAKT AS B
                                    ON B~MATNR EQ M1~MATNR
@@ -1810,6 +1810,8 @@ FORM MATERIAL_DOC_BASIC_STOCK .
 *--------------------------------------------------------------------*
 
   DATA(LT_BB) = GT_BATCH_0400[].
+* 🔧[R] 이동유형 그룹(GI1~GR5)별 수량/금액을 CASE WHEN으로 피벗(+SUM CTE)
+*       → MATNR/WERKS/LGORT/CHARG/LIFNR 단위로 SUM 집계 (FS §4)
   WITH +SUM AS ( SELECT A~MATNR, A~WERKS, A~LGORT, A~CHARG, A~LIFNR,
                         CASE WHEN ZGROUP EQ 'GI1' THEN MENGE END AS MENGE_GI1,
                         CASE WHEN ZGROUP EQ 'GI2' THEN MENGE END AS MENGE_GI2,

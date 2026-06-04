@@ -196,5 +196,8 @@ ENDFORM.
 - [x] C5 안전성 점검 (PASS)
 - [x] C1 파일럿 (`GET_GROUP_ZMMT0010`)
 - [x] C1 배치 1 — `to-be/zmmpar52000f01.abap` 생성 (파일럿 + LT_SUM2 SORT)
-- [ ] C1 배치 2 — `MATERIAL_DOC_BASIC_STOCK`(7 SELECT) 등 컬럼 한글주석
+- [x] C1 배치 2 — `MATERIAL_DOC_BASIC_STOCK` 7 SELECT **컬럼 한글주석 67개** + 집계 CTE 설명 (alias 현행 유지 확정)
+- [ ] C1 배치 3 (선택) — 잔여 소형 SELECT(`CHECK_INPUT`/`SHOW_GROUP_RAW`/`CO_AMT` 등) 주석
 - [ ] C4 (스타일 표준화) → ⏸️ 게이트 → C3 (구조체 통합) → C2 (5벌 DRY)
+
+> **alias 정책 확정(2026-06-04)**: 다중 JOIN SQL은 **컬럼 한글주석만 적용, alias 현행 유지**(재정렬 미적용 — 변경폭/검증부담 회피, 의미보존 우선).
