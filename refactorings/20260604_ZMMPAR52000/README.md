@@ -10,7 +10,7 @@ ABAP 리팩토링 작업 폴더. 현재 **As-Is 원본만 확보**된 상태 (�
 | 입력 단위 | PROG 전체 (다중 INCLUDE) |
 | 적용 모드 | **R + M** (성능 P 제외) |
 | 작업일 | 2026-06-04 |
-| 상태 | 🟢 진행중 — Phase 0/C5 완료, C1 파일럿 1건 ([REPORT.md](./REPORT.md)) |
+| 상태 | ✅ 1차 R+M 완료 — 7개 INCLUDE to-be 산출, C2(DRY) 미적용 결정 ([REPORT.md](./REPORT.md)) |
 
 ## 구성
 
