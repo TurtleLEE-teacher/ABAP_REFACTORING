@@ -44,12 +44,15 @@
 
 | 파일 | 내용 | 상태 |
 |---|---|---|
-| `zmmpar52000cls.abap` | 단일 `LCL_EVENT_RECEIVER`(SENDER+DYNNR 분기) | ✅ 본 작업 |
-| `zmmpar52000top.abap` | 데이터 구조 유지 + ALV 인프라 2벌 선언(LIKE→TYPE 일부) | ✅ 본 작업 |
-| `zmmpar52000f02.abap` | 모던 ALV 셋업: `CREATE_INSTANCE_MAIN/POP`·`SET_FIELDCAT_*`(RTTI)·`DISPLAY_ALV_*`·`CREATE_EVENT_RECEIVER`·`FREE_*`/`EXIT_RTN` | 🔜 다음 |
-| `zmmpar52000o01/i01.abap` | 슬림 모듈(공통 폼 호출) | 🔜 다음 |
+| `zmmpar52000c01.abap` | 단일 `LCL_EVENT_RECEIVER`(SY-DYNNR 분기) | ✅ 완료 |
+| `zmmpar52000top.abap` | 데이터 구조 유지 + ALV 인프라 2벌(MAIN/POP) 선언 | ✅ 완료 |
+| `zmmpar52000f02.abap` | 모던 ALV 셋업: `ALV_DISPLAY_MAIN/POP`·`CREATE_INSTANCE_*`·`BUILD_FIELDCAT`(RTTI)·`CREATE_EVENT_RECEIVER`·`FREE_POPUP_CONTROLS`/`EXIT_RTN` | ✅ 골격(SE38 완성 필요) |
+| `zmmpar52000o01.abap` | 슬림 PBO: `STATUS_0100` + 단일 `CREATE_ALV` | ✅ 완료 |
+| `zmmpar52000i01.abap` | 슬림 PAI: `EXIT_COMMAND` + 단일 `USER_COMMAND` | ✅ 완료 |
 
-> F01(비즈니스 로직)·SCR(셀렉션)은 모던화 대상 아님 — 기존 `to-be/` 버전 재사용.
+> F01(비즈니스 로직)·SCR(셀렉션)은 모던화 대상 아님 — 기존 [`../to-be/`](../to-be/) 버전 재사용.
+>
+> **SE38 잔여 완성 작업**: ① `BUILD_FIELDCAT` 화면별 컬럼 규칙을 구 `BUILD_CATEGORY_200/300/500`에서 이관 ② 핸들러/비즈니스 FORM(`HANDLE_DOUBLE_CLICK_*` 등)을 `to-be/f02`에서 이관 ③ Screen Painter/PF-STATUS/텍스트기호 반영(아래 §4) ④ 화면 Flow Logic을 단일 모듈명(`CREATE_ALV`/`USER_COMMAND`)으로 통일.
 
 ---
 
