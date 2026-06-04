@@ -184,9 +184,17 @@ ENDFORM.
 - [ ] 한국어 주석 100% 유지 확인
 - [ ] **Rollback**: `git revert <commit>` 또는 `as-is/` 원본 복원
 
+## C1 — F01 To-Be 산출물 (배치 1)
+- 📄 **`to-be/zmmpar52000f01.abap`** 생성 (HTML 원본 → 클린 ABAP 추출 + 리팩토링 적용)
+  - `GET_GROUP_ZMMT0010` R+M 반영 (위 파일럿과 동일)
+  - `LT_SUM2` **명시 SORT 1줄 추가** (C5 권고 → 확정 적용, FS §6)
+  - 무결성: FORM/ENDFORM 26/26, 비SQL 코드 원본 보존
+- F01 SELECT 전수 19개 중 SQL 핵심 잔여(특히 `MATERIAL_DOC_BASIC_STOCK` 7개)는 **배치 2**에서 컬럼 한글주석 적용 예정.
+
 ## 📌 진행 현황
 - [x] Phase 0 전체 스캔 + 클러스터 정의
 - [x] C5 안전성 점검 (PASS)
-- [x] C1 파일럿 1건 (`GET_GROUP_ZMMT0010`)
-- [ ] C1 확대: F01 잔여 SQL FORM (`MATERIAL_DOC_BASIC_STOCK`, `SHOW_BATCH_DATA`, `PERIOD_SETTING` 등) → `to-be/zmmpar52000f01.abap` 산출
-- [ ] C4 → C3 → C2 순차 진행
+- [x] C1 파일럿 (`GET_GROUP_ZMMT0010`)
+- [x] C1 배치 1 — `to-be/zmmpar52000f01.abap` 생성 (파일럿 + LT_SUM2 SORT)
+- [ ] C1 배치 2 — `MATERIAL_DOC_BASIC_STOCK`(7 SELECT) 등 컬럼 한글주석
+- [ ] C4 (스타일 표준화) → ⏸️ 게이트 → C3 (구조체 통합) → C2 (5벌 DRY)
