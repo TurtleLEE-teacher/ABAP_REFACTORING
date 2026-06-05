@@ -41,6 +41,15 @@ DATA : GCL_GRID_POP      TYPE REF TO CL_GUI_ALV_GRID,
 * --- 공통 : TOP_OF_PAGE (HTML 헤더) ---
 DATA : GCL_ALV_DOCUMENT TYPE REF TO CL_DD_DOCUMENT,
        GCL_HTML_VIEWER  TYPE REF TO CL_GUI_HTML_VIEWER.
+
+* --- 메인(0100/0400) 동적 테이블 필드카탈로그 (런타임 이동유형그룹 컬럼) ---
+*     화면 0100/0400은 그룹(GR1~GR5/GI1~GI4) 컬럼이 런타임 생성 → 동적 유지(패턴 §3-7).
+*     CREATE_DYNAMIC_TABLE(F01)이 BUILD_CATEGORY_100/400으로 아래 카탈로그 구축.
+DATA : GT_ALV_FIELDCAT     TYPE LVC_T_FCAT,
+       GT_ALV_FIELDCAT_100 TYPE LVC_T_FCAT,
+       GT_ALV_FIELDCAT_400 TYPE LVC_T_FCAT,
+       GS_ALV_STABLE       TYPE LVC_S_STBL.   " refresh 시 행/열 고정
+FIELD-SYMBOLS <FS_ALV_FIELDCAT> LIKE LINE OF GT_ALV_FIELDCAT.
 *======================================================================
 
 * 0200 Screen - 더블 클릭 팝업 창

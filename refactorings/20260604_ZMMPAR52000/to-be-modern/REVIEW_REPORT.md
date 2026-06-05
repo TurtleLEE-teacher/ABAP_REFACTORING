@@ -11,6 +11,19 @@
 
 ---
 
+## 🛑 H0 — 메인 화면 동적 테이블 (SE38 테스트로 발견 → 수정 완료)
+
+**증상**: `ZMMPAR52000F01`의 `CREATE_DYNAMIC_TABLE`에서 `Field "GT_ALV_FIELDCAT_100" is unknown`.
+
+**원인**: 이 프로그램의 메인 화면(0100/0400)은 **런타임 동적 테이블** 구조다. `CREATE_DYNAMIC_TABLE`(F01)이 `BUILD_CATEGORY_100/400`으로 필드카탈로그(`GT_ALV_FIELDCAT_100/400`)를 만들고 `CL_ALV_TABLE_CREATE`로 이동유형그룹(GR1~GR5/GI1~GI4) 런타임 컬럼 테이블 `<GT_BATCH>`/`<GT_TABLE>`을 생성한다. 초기 모던화가 이를 정적+RTTI로 잘못 가정해 해당 선언/폼을 제거 → F01 깨짐.
+
+**수정**(패턴 §3-7 "그룹 런타임 컬럼은 동적 유지"):
+1. 모던 TOP에 `GT_ALV_FIELDCAT`/`_100`/`_400` + `<FS_ALV_FIELDCAT>` + `GS_ALV_STABLE` 선언 복원
+2. `BUILD_CATEGORY_100/400`(동적 카탈로그 빌더) 모던 F02로 이관
+3. `ALV_DISPLAY_MAIN`을 **동적 테이블 바인딩**(`IT_OUTTAB = <GT_BATCH>`/`<GT_TABLE>`, `IT_FIELDCATALOG = GT_ALV_FIELDCAT_400/100`)으로 재배선 (원본 `DISPLAY_ALV_400`과 동일). 팝업(0200/0300/0500)은 정적 → RTTI 유지.
+
+**정적 재검증**: 미선언 옛 ALV 전역 0, 미정의 PERFORM 0, FS 전부 선언, FORM/ENDFORM 균형. → F01 컴파일 오류 해소.
+
 ## 🔴 HIGH
 
 | # | 항목 | 내용 / 조치 |
