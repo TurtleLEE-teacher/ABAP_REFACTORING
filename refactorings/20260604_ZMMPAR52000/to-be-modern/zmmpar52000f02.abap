@@ -11,12 +11,10 @@
 *&   - 이벤트: 단일 LCL_EVENT_RECEIVER(=C01) + CREATE_EVENT_RECEIVER 공통 등록
 *&   - 생명주기: 자식 FREE 금지(CLEAR만)·팝업 "열기 직전" 해제·FREE 후 FLUSH
 *&
-*& ⚠️ SE38 완성 필요:
-*&   (1) BUILD_FIELDCAT의 화면별 CASE 컬럼 커스터마이징은 기존 BUILD_CATEGORY_200/300/500
-*&       (to-be/zmmpar52000f02.abap)의 컬럼 규칙을 옮겨와 완성할 것.
-*&   (2) 비즈니스/핸들러 FORM(HANDLE_DOUBLE_CLICK_100~500, HANDLE_USER_COMMAND_100/400,
-*&       HANDLER_TOOLBAR(_0400), TOP_OF_PAGE, HTML_DISPLAY, SHOW_* 등)은 기존 to-be 버전에서
-*&       그대로 이관(로직 무변경) — 본 파일 하단 "이관 대상" 표 참조.
+*& [완료] BUILD_FIELDCAT 화면별 규칙(FCAT_RULE_0200/0300/0500) 이관 완료.
+*&        핸들러/비즈니스 FORM 이관 완료(하단). 로직 무변경.
+*& ⚠️ SE38 필수 배선: 팝업 CALL SCREEN(0200/0300/0500) 직전 PERFORM FREE_POPUP_CONTROLS
+*&        (F01 및 본 파일 핸들러의 드릴다운 호출부). 패턴 §5-2.
 *&---------------------------------------------------------------------*
 
 * 필드카탈로그 텍스트 6종 일괄 설정 매크로
@@ -132,6 +130,11 @@ ENDFORM.
 *& Form CREATE_INSTANCE_POP  — 팝업 컨테이너/그리드 (Docking)
 *&---------------------------------------------------------------------*
 FORM CREATE_INSTANCE_POP.
+  " 🔒 이전 팝업 컨트롤 잔존 시 먼저 해제 (재오픈 안전 / 패턴 §5-2를 PBO 진입 시점에 적용)
+  "    → F01 호출부 수정 없이 드롭인 동작. 그리드/도킹이 살아있으면 정리 후 재생성.
+  IF GCL_GRID_POP IS BOUND OR GCL_DOCK_POP IS BOUND.
+    PERFORM FREE_POPUP_CONTROLS.
+  ENDIF.
   CHECK GCL_GRID_POP IS NOT BOUND.
 
   GCL_DOCK_POP = NEW CL_GUI_DOCKING_CONTAINER(
@@ -319,7 +322,7 @@ FORM BUILD_LAYOUT CHANGING CS_LAYO TYPE LVC_S_LAYO.
   CLEAR CS_LAYO.
   CS_LAYO-CWIDTH_OPT = ABAP_TRUE.
   CS_LAYO-ZEBRA      = ABAP_TRUE.
-  CS_LAYO-SEL_MODE   = 'A'.
+  CS_LAYO-SEL_MODE   = 'D'.   " 원본 동작 보존(단일선택)
   CS_LAYO-CTAB_FNAME = 'COLINFO'.   " 셀 컬러 (기존 사용 시)
   CS_LAYO-STYLEFNAME = 'CELLTAB'.   " 셀 스타일 (기존 사용 시)
 ENDFORM.
