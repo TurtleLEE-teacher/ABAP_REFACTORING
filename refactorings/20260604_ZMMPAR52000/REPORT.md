@@ -200,7 +200,8 @@ ENDFORM.
 - [x] **M(정리) — F01 죽은 주석코드 231줄 제거** → [`CLEANUP_LOG_f01.md`](./CLEANUP_LOG_f01.md)
 - [x] **F02 + 소형 INCLUDE 전체 처리** — to-be 6종 생성, 죽은코드 **276줄 제거** + F02 컬럼주석 82개 → [`CLEANUP_LOG_others.md`](./CLEANUP_LOG_others.md)
   - F02(252)·TOP(7)·C01(2)·SCR(1)·O01(14)·I01(0). 무결성: FORM/MODULE/CLASS 전부 보존
-- [x] **전체 to-be 7개 INCLUDE 클린본 확보** (HTML→UTF-8 ABAP, 죽은코드 정리, R 컬럼주석)
+- [x] **전체 to-be 8개 INCLUDE 클린본 확보** (메인 `zmmpar52000.abap` 포함, HTML→UTF-8 ABAP, 죽은코드 정리, R 컬럼주석) — `to-be/`는 완전 드롭인 세트 ([to-be/README.md](./to-be/README.md))
+  - 메인 진입 화면 = **0400** (`DISPLAY_DATA`→`CALL SCREEN 400`), 팝업 0200/0300/0500, 화면 0100 미사용
 - [x] **C2 (5벌 중복 DRY) — 미적용 결정(2026-06-04)**: 5벌 ALV는 접미사만 다른 안정적 보일러플레이트이며, 통합 시 C01/O01/I01/F02 동반·시그니처 변경 + 5화면 전수 테스트 부담 대비 ROI 낮음 → **현행 유지**(의미보존 우선).
   - ✅ **ALV 모던화 v2 초안 착수**: [`to-be-modern/`](./to-be-modern/) — 5벌→2벌(MAIN/POP)·RTTI 필드카탈로그·단일 이벤트클래스·컨트롤 생명주기. 설계·SE38 절차는 [`to-be-modern/ALV_MODERNIZATION_DESIGN.md`](./to-be-modern/ALV_MODERNIZATION_DESIGN.md).
     - 생성: TOP(인프라 2벌)/C01(단일 이벤트클래스)/F02(ALV 셋업 골격)/O01(슬림 PBO)/I01(슬림 PAI)
